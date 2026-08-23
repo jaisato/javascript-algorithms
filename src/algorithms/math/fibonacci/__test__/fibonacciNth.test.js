@@ -19,7 +19,15 @@ describe('fibonacciNth', () => {
     expect(fibonacciNth(73)).toBe(806515533049393);
     expect(fibonacciNth(74)).toBe(1304969544928657);
     expect(fibonacciNth(75)).toBe(2111485077978050);
-    expect(fibonacciNth(80)).toBe(23416728348467685);
-    expect(fibonacciNth(90)).toBe(2880067194370816120);
+    // Past F(78) the answer no longer fits in a JavaScript number: 2^53 is
+    // 9007199254740992, and F(79) is already above it. These two lines used to
+    // carry the mathematically correct values, 23416728348467685 and
+    // 2880067194370816120, which the language cannot represent - it stores the
+    // nearest double instead, and the assertions only passed because the
+    // function's own accumulated rounding happened to land on that same double.
+    // Written as the numbers that actually exist, so the test states what it
+    // checks rather than implying an exactness that is not there.
+    expect(fibonacciNth(80)).toBe(23416728348467684);
+    expect(fibonacciNth(90)).toBe(2880067194370816000);
   });
 });

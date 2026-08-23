@@ -23,6 +23,10 @@ module.exports = {
 
   // This option sets the URL for the jsdom environment.
   // It is reflected in properties such as location.href.
+  // Was the top-level `testURL`, which Jest deprecated in 27 and warned about
+  // on every run.
   // @see: https://github.com/facebook/jest/issues/6769
-  testURL: 'http://localhost/',
+  testEnvironmentOptions: {
+    url: 'http://localhost/',
+  },
 };
