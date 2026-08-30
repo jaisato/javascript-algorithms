@@ -1,7 +1,9 @@
 {
   "root": true,
-  "extends": "airbnb",
-  "plugins": ["jest"],
+  "extends": "airbnb-base",
+  "plugins": [
+    "jest"
+  ],
   "env": {
     "jest/globals": true
   },

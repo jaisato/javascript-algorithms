@@ -1,8 +1,12 @@
-sudo: required
-dist: trusty
+dist: jammy
 language: node_js
 node_js:
-  - "11"
+  # Was "11". The toolchain this repository now locks cannot run there: Jest 30
+  # requires Node ^18.14 || ^20 || >=22, ESLint 8 requires >=16 and Husky 9
+  # requires >=18. The pipeline would have failed on `npm install` long before
+  # reaching a test. `dist` was "trusty", which Travis retired years ago and
+  # which cannot boot a modern Node either.
+  - "22"
 install:
   - npm install -g codecov
   - npm install
