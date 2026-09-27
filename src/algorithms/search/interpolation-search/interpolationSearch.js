@@ -21,6 +21,15 @@ export default function interpolationSearch(sortedArray, seekElement) {
       return -1;
     }
 
+    // Likewise, a seek element above the highest element of the range can't be
+    // in it. Without this check the interpolated middleIndex lands past
+    // rightIndex (even past the end of the array), the comparison against
+    // `undefined` is false, rightIndex is reset to the same value and the loop
+    // never terminates - e.g. searching 10 in [0, 1, 4, 4, 8, 8, 8].
+    if (seekElement > sortedArray[rightIndex]) {
+      return -1;
+    }
+
     // If range delta is zero then subarray contains all the same numbers
     // and thus there is nothing to search for unless this range is all
     // consists of seek number.

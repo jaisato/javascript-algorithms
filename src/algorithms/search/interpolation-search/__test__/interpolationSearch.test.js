@@ -21,4 +21,10 @@ describe('interpolationSearch', () => {
     expect(interpolationSearch([1, 2, 3, 700, 800, 1200, 1300, 1400, 19000], 800)).toBe(4);
     expect(interpolationSearch([0, 10, 11, 12, 13, 14, 15], 10)).toBe(1);
   });
+
+  it('should terminate when the element is greater than every element', () => {
+    expect(interpolationSearch([0, 1, 4, 4, 8, 8, 8], 10)).toBe(-1);
+    expect(interpolationSearch([1, 2], 3)).toBe(-1);
+    expect(interpolationSearch([1, 2, 3, 700, 800, 1200, 1300, 1400, 1900], 5000)).toBe(-1);
+  });
 });
