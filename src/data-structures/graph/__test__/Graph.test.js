@@ -305,6 +305,26 @@ describe('Graph', () => {
     expect(graph.getNeighbors(vertexD)[0].getKey()).toBe(vertexC.getKey());
   });
 
+  it('should reverse a graph that has edges in both directions', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+
+    const graph = new Graph(true);
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB))
+      .addEdge(new GraphEdge(vertexB, vertexA))
+      .addEdge(new GraphEdge(vertexB, vertexC));
+
+    // Reversing A->B while B->A was still in place used to throw.
+    graph.reverse();
+
+    expect(graph.getAllEdges().map((edge) => edge.getKey()).sort()).toEqual(['A_B', 'B_A', 'C_B']);
+    expect(graph.getNeighbors(vertexA).map((vertex) => vertex.getKey())).toEqual(['B']);
+    expect(graph.getNeighbors(vertexB).map((vertex) => vertex.getKey())).toEqual(['A']);
+    expect(graph.getNeighbors(vertexC).map((vertex) => vertex.getKey())).toEqual(['B']);
+  });
+
   it('should return vertices indices', () => {
     const vertexA = new GraphVertex('A');
     const vertexB = new GraphVertex('B');

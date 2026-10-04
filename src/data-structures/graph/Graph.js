@@ -137,15 +137,19 @@ export default class Graph {
    * @return {Graph}
    */
   reverse() {
+    const edges = this.getAllEdges();
+
+    // Take every edge out before adding any back. Reversing them one at a
+    // time threw "Edge has already been added before" as soon as the graph
+    // held both A->B and B->A: the reversed A->B collided with the B->A that
+    // had not been reversed yet. Strongly connected components - where such
+    // pairs are the normal case - reverse the graph and hit exactly that.
     /** @param {GraphEdge} edge */
-    this.getAllEdges().forEach((edge) => {
-      // Delete straight edge from graph and from vertices.
-      this.deleteEdge(edge);
+    edges.forEach((edge) => this.deleteEdge(edge));
 
-      // Reverse the edge.
+    /** @param {GraphEdge} edge */
+    edges.forEach((edge) => {
       edge.reverse();
-
-      // Add reversed edge back to the graph and its vertices.
       this.addEdge(edge);
     });
 

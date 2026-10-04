@@ -99,4 +99,22 @@ describe('stronglyConnectedComponents', () => {
     expect(components[3][1].getKey()).toBe(vertexF.getKey());
     expect(components[3][2].getKey()).toBe(vertexE.getKey());
   });
+
+  it('should handle vertices joined in both directions', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+
+    const graph = new Graph(true);
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB))
+      .addEdge(new GraphEdge(vertexB, vertexA))
+      .addEdge(new GraphEdge(vertexB, vertexC));
+
+    const components = stronglyConnectedComponents(graph)
+      .map((component) => component.map((vertex) => vertex.getKey()).sort().join(''))
+      .sort();
+
+    expect(components).toEqual(['AB', 'C']);
+  });
 });
