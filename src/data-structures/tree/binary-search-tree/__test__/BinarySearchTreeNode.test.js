@@ -252,4 +252,29 @@ describe('BinarySearchTreeNode', () => {
 
     expect(childNode.parent).toBeNull();
   });
+
+  it('should keep parent links right when a node is replaced by its only child', () => {
+    const bstRootNode = new BinarySearchTreeNode(10);
+    bstRootNode.insert(5);
+    bstRootNode.insert(3);
+
+    // 3 takes 5's place under 10, so its parent must now be 10.
+    bstRootNode.remove(5);
+    expect(bstRootNode.find(3).parent).toBe(bstRootNode);
+
+    // With the stale parent this edited the detached 5 and 3 stayed in the tree.
+    bstRootNode.remove(3);
+    expect(bstRootNode.toString()).toBe('10');
+    expect(bstRootNode.contains(3)).toBe(false);
+  });
+
+  it('should accept new values after the last one was removed', () => {
+    const bstRootNode = new BinarySearchTreeNode();
+    bstRootNode.insert(1);
+    bstRootNode.remove(1);
+
+    bstRootNode.insert(2);
+    expect(bstRootNode.value).toBe(2);
+    expect(bstRootNode.toString()).toBe('2');
+  });
 });

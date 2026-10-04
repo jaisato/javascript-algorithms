@@ -165,13 +165,17 @@ export default class BinaryTreeNode {
       return false;
     }
 
+    // Go through setLeft()/setRight() so the replacement's `parent` points
+    // here. Assigning the field directly left it pointing at the node being
+    // replaced, so removing the replacement later from a BST edited that
+    // detached node instead of the tree, and the value stayed in the tree.
     if (this.left && this.nodeComparator.equal(this.left, nodeToReplace)) {
-      this.left = replacementNode;
+      this.setLeft(replacementNode);
       return true;
     }
 
     if (this.right && this.nodeComparator.equal(this.right, nodeToReplace)) {
-      this.right = replacementNode;
+      this.setRight(replacementNode);
       return true;
     }
 

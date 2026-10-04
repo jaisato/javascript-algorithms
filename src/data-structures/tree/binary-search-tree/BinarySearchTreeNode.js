@@ -103,7 +103,10 @@ export default class BinarySearchTreeNode extends BinaryTreeNode {
         parent.removeChild(nodeToRemove);
       } else {
         // Node has no parent. Just erase current node value.
-        nodeToRemove.setValue(undefined);
+        // Back to the empty state the constructor creates (value null), which
+        // is what insert() checks for. Setting undefined left a phantom root:
+        // the next insert() hung the new value under it instead of storing it.
+        nodeToRemove.setValue(null);
       }
     } else if (nodeToRemove.left && nodeToRemove.right) {
       // Node has two children.
