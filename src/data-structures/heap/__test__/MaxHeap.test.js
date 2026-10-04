@@ -169,4 +169,18 @@ describe('MaxHeap', () => {
     maxHeap.remove('hey', comparator);
     expect(maxHeap.toString()).toBe('dddd,a,bb');
   });
+
+  it('should heapify up after removal when the parent value is falsy', () => {
+    const maxHeap = new MaxHeap();
+    [10, 0, 9, -1, -2, 8, 7, -3, -4, -5, -6, 6, 5, 4, 3].forEach((item) => maxHeap.add(item));
+
+    maxHeap.remove(-1);
+
+    const polled = [];
+    while (!maxHeap.isEmpty()) {
+      polled.push(maxHeap.poll());
+    }
+
+    expect(polled).toEqual([10, 9, 8, 7, 6, 5, 4, 3, 0, -2, -3, -4, -5, -6]);
+  });
 });

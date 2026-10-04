@@ -191,4 +191,20 @@ describe('MinHeap', () => {
     minHeap.remove(4);
     expect(minHeap.toString()).toBe('1,5,3,8,9,6,7');
   });
+
+  it('should heapify up after removal when the parent value is falsy', () => {
+    const minHeap = new MinHeap();
+    [-10, 0, -9, 1, 2, -8, -7, 3, 4, 5, 6, -6, -5, -4, -3].forEach((item) => minHeap.add(item));
+
+    // -3 moves into the vacant slot under 0. A parent of 0 used to read as
+    // "no parent", so -3 was heapified down and stayed below 0.
+    minHeap.remove(1);
+
+    const polled = [];
+    while (!minHeap.isEmpty()) {
+      polled.push(minHeap.poll());
+    }
+
+    expect(polled).toEqual([-10, -9, -8, -7, -6, -5, -4, -3, 0, 2, 3, 4, 5, 6]);
+  });
 });
