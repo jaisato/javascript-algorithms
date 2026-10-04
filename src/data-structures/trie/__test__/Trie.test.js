@@ -62,6 +62,19 @@ describe('Trie', () => {
     expect(trie.doesWordExist('cart')).toBe(false);
   });
 
+  it('should delete words with characters outside the BMP', () => {
+    const trie = new Trie();
+
+    trie.addWord('hi😀');
+    trie.addWord('hi');
+    expect(trie.doesWordExist('hi😀')).toBe(true);
+
+    trie.deleteWord('hi😀');
+    expect(trie.doesWordExist('hi😀')).toBe(false);
+    expect(trie.doesWordExist('hi')).toBe(true);
+    expect(trie.suggestNextCharacters('hi')).toEqual([]);
+  });
+
   it('should suggests next characters', () => {
     const trie = new Trie();
 
