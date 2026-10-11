@@ -191,4 +191,19 @@ describe('MinHeap', () => {
     minHeap.remove(4);
     expect(minHeap.toString()).toBe('1,5,3,8,9,6,7');
   });
+
+  it('should heapify up a moved item whose new parent is 0', () => {
+    const minHeap = new MinHeap();
+    // A valid min-heap: removing 5 (index 3, under the 0) moves -5 under the 0.
+    minHeap.heapContainer = [-10, 0, -9, 5, 6, -8, -7, 10, 11, 12, 13, -5];
+
+    minHeap.remove(5);
+
+    const polled = [];
+    while (!minHeap.isEmpty()) {
+      polled.push(minHeap.poll());
+    }
+
+    expect(polled).toEqual([-10, -9, -8, -7, -5, 0, 6, 10, 11, 12, 13]);
+  });
 });
