@@ -142,13 +142,14 @@ export default class BinaryTreeNode {
    * @return {boolean}
    */
   removeChild(nodeToRemove) {
+    // setLeft()/setRight() also clear the detached child's parent pointer.
     if (this.left && this.nodeComparator.equal(this.left, nodeToRemove)) {
-      this.left = null;
+      this.setLeft(null);
       return true;
     }
 
     if (this.right && this.nodeComparator.equal(this.right, nodeToRemove)) {
-      this.right = null;
+      this.setRight(null);
       return true;
     }
 
@@ -165,13 +166,18 @@ export default class BinaryTreeNode {
       return false;
     }
 
+    // Assigning this.left/this.right directly left replacementNode.parent
+    // pointing at the node it replaced. BinarySearchTreeNode.remove() relies
+    // on that pointer: after removing a node with one child, removing that
+    // child next detached it from the already-removed node instead of from
+    // the tree, so the value stayed in the tree.
     if (this.left && this.nodeComparator.equal(this.left, nodeToReplace)) {
-      this.left = replacementNode;
+      this.setLeft(replacementNode);
       return true;
     }
 
     if (this.right && this.nodeComparator.equal(this.right, nodeToReplace)) {
-      this.right = replacementNode;
+      this.setRight(replacementNode);
       return true;
     }
 

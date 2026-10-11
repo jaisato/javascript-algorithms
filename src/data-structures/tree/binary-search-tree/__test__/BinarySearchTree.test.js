@@ -95,4 +95,31 @@ describe('BinarySearchTree', () => {
     expect(bst.toString()).toBe('-20,-10,4,6,10,20,25');
     expect(bst.root.height).toBe(3);
   });
+
+  it('should accept new values after its last value was removed', () => {
+    const bst = new BinarySearchTree();
+
+    bst.insert(10);
+    bst.remove(10);
+    bst.insert(5);
+
+    expect(bst.contains(5)).toBe(true);
+    expect(bst.toString()).toBe('5');
+  });
+
+  it('should remove the child of a previously removed one-child node', () => {
+    const bst = new BinarySearchTree();
+
+    bst.insert(10);
+    bst.insert(5);
+    bst.insert(3);
+
+    bst.remove(5);
+    expect(bst.root.left.value).toBe(3);
+    expect(bst.root.left.parent).toBe(bst.root);
+
+    bst.remove(3);
+    expect(bst.contains(3)).toBe(false);
+    expect(bst.toString()).toBe('10');
+  });
 });

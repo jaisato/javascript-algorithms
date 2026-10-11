@@ -294,4 +294,20 @@ describe('BinaryTreeNode', () => {
     expect(root.toString()).toBe('left,root,right');
     expect(newRoot.toString()).toBe('left,root,right');
   });
+
+  it('should keep parent pointers right when removing or replacing children', () => {
+    const rootNode = new BinaryTreeNode(2);
+    const leftNode = new BinaryTreeNode(1);
+    const rightNode = new BinaryTreeNode(3);
+    const replacementNode = new BinaryTreeNode(4);
+
+    rootNode.setLeft(leftNode).setRight(rightNode);
+
+    rootNode.replaceChild(rightNode, replacementNode);
+    expect(replacementNode.parent).toBe(rootNode);
+    expect(rightNode.parent).toBeNull();
+
+    rootNode.removeChild(leftNode);
+    expect(leftNode.parent).toBeNull();
+  });
 });
