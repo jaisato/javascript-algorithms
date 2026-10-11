@@ -66,4 +66,9 @@ describe('squareRoot', () => {
     expect(squareRoot(4.5, 10)).toBe(2.1213203436);
     expect(squareRoot(217.534, 10)).toBe(14.7490338667);
   });
+
+  it('should terminate when the tolerance is finer than floating point allows', () => {
+    expect(squareRoot(2e20)).toBe(14142135624);
+    expect(squareRoot(10, 20)).toBeCloseTo(Math.sqrt(10), 14);
+  });
 });
