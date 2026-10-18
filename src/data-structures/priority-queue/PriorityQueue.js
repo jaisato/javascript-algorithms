@@ -32,9 +32,10 @@ export default class PriorityQueue extends MinHeap {
    * Remove item from priority queue.
    * @param {*} item - item we're going to remove.
    * @param {Comparator} [customFindingComparator] - custom function for finding the item to remove
+   *   (by default items are matched by value, not by priority).
    * @return {PriorityQueue}
    */
-  remove(item, customFindingComparator) {
+  remove(item, customFindingComparator = new Comparator(this.compareValue)) {
     super.remove(item, customFindingComparator);
     this.priorities.delete(item);
     return this;
