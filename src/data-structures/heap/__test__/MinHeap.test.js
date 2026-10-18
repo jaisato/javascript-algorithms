@@ -191,4 +191,17 @@ describe('MinHeap', () => {
     minHeap.remove(4);
     expect(minHeap.toString()).toBe('1,5,3,8,9,6,7');
   });
+
+  it('should keep the heap valid when removing below a parent equal to 0', () => {
+    const minHeap = new MinHeap();
+    [-100, 0, -50, 5, 6, -40, -30, 10, 11, 12, 13, -35].forEach((n) => minHeap.add(n));
+
+    minHeap.remove(5);
+
+    const sorted = [];
+    while (!minHeap.isEmpty()) {
+      sorted.push(minHeap.poll());
+    }
+    expect(sorted).toEqual([-100, -50, -40, -35, -30, 0, 6, 10, 11, 12, 13]);
+  });
 });
