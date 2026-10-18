@@ -86,4 +86,21 @@ describe('HashTable', () => {
     expect(hashTable.has('b')).toBe(true);
     expect(hashTable.has('x')).toBe(false);
   });
+
+  it('should treat keys named after Object.prototype members as regular keys', () => {
+    const hashTable = new HashTable();
+
+    expect(hashTable.has('constructor')).toBe(false);
+
+    hashTable.set('__proto__', 'a');
+    hashTable.set('constructor', 'b');
+
+    expect(hashTable.has('__proto__')).toBe(true);
+    expect(hashTable.has('constructor')).toBe(true);
+    expect(hashTable.get('__proto__')).toBe('a');
+    expect(hashTable.getKeys().sort()).toEqual(['__proto__', 'constructor']);
+
+    hashTable.delete('__proto__');
+    expect(hashTable.has('__proto__')).toBe(false);
+  });
 });

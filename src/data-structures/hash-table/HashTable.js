@@ -15,7 +15,9 @@ export default class HashTable {
     this.buckets = Array(hashTableSize).fill(null).map(() => new LinkedList());
 
     // Just to keep track of all actual keys in a fast way.
-    this.keys = {};
+    // No prototype, so keys such as "__proto__" or "constructor" are stored
+    // as ordinary entries instead of hitting Object.prototype.
+    this.keys = Object.create(null);
   }
 
   /**
