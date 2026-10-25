@@ -6,7 +6,9 @@ export default class DisjointSet {
    */
   constructor(keyCallback) {
     this.keyCallback = keyCallback;
-    this.items = {};
+    // No prototype: with a plain object, makeSet('constructor') found
+    // Object.prototype.constructor, skipped the insert, and find() then threw.
+    this.items = Object.create(null);
   }
 
   /**

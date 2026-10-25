@@ -138,3 +138,23 @@ describe('DisjointSet', () => {
     expect(disjointSet.inSameSet(itemA, itemC)).toBe(true);
   });
 });
+
+describe('DisjointSet with keys that exist on Object.prototype', () => {
+  it('should treat them as ordinary items', () => {
+    const disjointSet = new DisjointSet();
+
+    disjointSet
+      .makeSet('constructor')
+      .makeSet('__proto__')
+      .makeSet('toString');
+
+    expect(disjointSet.find('constructor')).toBe('constructor');
+    expect(disjointSet.find('hasOwnProperty')).toBeNull();
+    expect(disjointSet.inSameSet('constructor', '__proto__')).toBe(false);
+
+    disjointSet.union('constructor', '__proto__');
+    disjointSet.union('toString', 'constructor');
+
+    expect(disjointSet.inSameSet('__proto__', 'toString')).toBe(true);
+  });
+});
