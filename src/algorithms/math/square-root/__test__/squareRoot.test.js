@@ -66,4 +66,10 @@ describe('squareRoot', () => {
     expect(squareRoot(4.5, 10)).toBe(2.1213203436);
     expect(squareRoot(217.534, 10)).toBe(14.7490338667);
   });
+
+  it('should stop at the closest double when the tolerance is finer than it', () => {
+    // No double squares to within 1e-15 of 10, so this used to loop forever.
+    expect(squareRoot(10, 15)).toBeCloseTo(Math.sqrt(10), 14);
+    expect(squareRoot(1e20, 10)).toBe(1e10);
+  });
 });

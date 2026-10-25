@@ -28,11 +28,24 @@ export default function squareRoot(number, tolerance = 0) {
   const requiredDelta = 1 / (10 ** tolerance);
 
   // Approximating the root value to the point when we get a desired precision.
+  let iteration = 0;
   while (Math.abs(number - (root ** 2)) > requiredDelta) {
     // Newton's method reduces in this case to the so-called Babylonian method.
     // These methods generally yield approximate results, but can be made arbitrarily
     // precise by increasing the number of calculation steps.
-    root -= ((root ** 2) - number) / (2 * root);
+    const nextRoot = root - ((root ** 2) - number) / (2 * root);
+
+    // After the first step every approximation is >= the real root and the
+    // sequence only decreases. In floating point it eventually stops decreasing
+    // (it stalls, or flips between two neighbouring values) - e.g. for
+    // squareRoot(10, 15), where no double squares to within 1e-15 of 10. That is
+    // as close as it gets, so stop there instead of looping forever.
+    if (iteration > 0 && nextRoot >= root) {
+      break;
+    }
+
+    root = nextRoot;
+    iteration += 1;
   }
 
   // Cut off undesired floating digits and return the root value.
