@@ -91,4 +91,17 @@ describe('Trie', () => {
     expect(trie.doesWordExist('cap')).toBe(false);
     expect(trie.doesWordExist('call')).toBe(false);
   });
+
+  it('should delete words containing astral characters', () => {
+    const trie = new Trie();
+
+    trie.addWord('cat😀');
+    trie.addWord('cat');
+    expect(trie.doesWordExist('cat😀')).toBe(true);
+
+    trie.deleteWord('cat😀');
+    expect(trie.doesWordExist('cat😀')).toBe(false);
+    expect(trie.doesWordExist('cat')).toBe(true);
+    expect(trie.suggestNextCharacters('cat')).toEqual([]);
+  });
 });
