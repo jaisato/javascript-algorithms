@@ -41,6 +41,11 @@ export default function squareRoot(number, tolerance = 0) {
     // squareRoot(10, 15), where no double squares to within 1e-15 of 10. That is
     // as close as it gets, so stop there instead of looping forever.
     if (iteration > 0 && nextRoot >= root) {
+      // The stalled step may still land exactly on the root (e.g. 131 or 1e80):
+      // keep whichever of the two neighbours squares closer to the number.
+      if (Math.abs(number - (nextRoot ** 2)) < Math.abs(number - (root ** 2))) {
+        root = nextRoot;
+      }
       break;
     }
 
