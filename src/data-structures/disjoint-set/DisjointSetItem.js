@@ -8,7 +8,7 @@ export default class DisjointSetItem {
     this.keyCallback = keyCallback;
     /** @var {DisjointSetItem} this.parent */
     this.parent = null;
-    this.children = {};
+    this.children = Object.create(null);
   }
 
   /**

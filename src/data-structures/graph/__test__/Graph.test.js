@@ -386,3 +386,23 @@ describe('Graph', () => {
     ]);
   });
 });
+
+describe('Graph with keys that exist on Object.prototype', () => {
+  it('should treat them as ordinary vertices', () => {
+    const graph = new Graph();
+
+    expect(graph.getVertexByKey('constructor')).toBeUndefined();
+
+    const vertexA = new GraphVertex('constructor');
+    const vertexB = new GraphVertex('__proto__');
+
+    graph.addEdge(new GraphEdge(vertexA, vertexB));
+
+    expect(graph.getVertexByKey('constructor')).toBe(vertexA);
+    expect(graph.getVertexByKey('__proto__')).toBe(vertexB);
+    expect(graph.getVertexByKey('toString')).toBeUndefined();
+    expect(graph.getAllVertices()).toEqual([vertexA, vertexB]);
+    expect(graph.getAllEdges().length).toBe(1);
+    expect(graph.toString()).toBe('constructor,__proto__');
+  });
+});
