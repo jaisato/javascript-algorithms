@@ -1,6 +1,3 @@
-// The string separator that is being used for "word" and "text" concatenation.
-const SEPARATOR = '$';
-
 /**
  * @param {string} zString
  * @return {number[]}
@@ -109,20 +106,27 @@ export default function zAlgorithm(text, word) {
   const wordPositions = [];
 
   // Concatenate word and string. Word will be a prefix to a string.
-  const zString = `${word}${SEPARATOR}${text}`;
+  //
+  // There used to be a '$' separator between them, on the assumption that it
+  // never appears in the input. When it did - zAlgorithm('a$bab', '$') or
+  // zAlgorithm('b$bb', 'b') - Z boxes ran across the separator and the result
+  // gained bogus positions (even -1) and lost real ones. No separator is
+  // needed: a Z value at a text position that reaches the word's length means
+  // the whole word matches there, and a longer value only means the match
+  // continues past the word, which is still a match.
+  const zString = `${word}${text}`;
 
   // Generate Z-array for concatenated string.
   const zArray = buildZArray(zString);
 
   // Based on Z-array properties each cell will tell us the length of the match between
   // the string prefix and current sub-text. Thus we're may find all positions in zArray
-  // with the number that equals to the length of the word (zString prefix) and based on
+  // with the number that is at least the length of the word (zString prefix) and based on
   // that positions we'll be able to calculate word positions in text.
-  for (let charIndex = 1; charIndex < zArray.length; charIndex += 1) {
-    if (zArray[charIndex] === word.length) {
-      // Since we did concatenation to form zString we need to subtract prefix
-      // and separator lengths.
-      const wordPosition = charIndex - word.length - SEPARATOR.length;
+  for (let charIndex = word.length; charIndex < zArray.length; charIndex += 1) {
+    if (zArray[charIndex] >= word.length) {
+      // Since we did concatenation to form zString we need to subtract the prefix length.
+      const wordPosition = charIndex - word.length;
       wordPositions.push(wordPosition);
     }
   }

@@ -12,6 +12,10 @@ helps with pattern matching, for if there is some index `i`
 such that `Z[i]` equals the pattern length, then the pattern
 must be present at that point.
 
+This implementation does not use a separator: a nonce character only works if
+it never appears in `W` or `T`. It concatenates `W` and `T` directly and reports
+every text position `i` where `Z[i]` is at least the pattern length.
+
 While the `Z` array can be computed with two nested loops in `O(|W| * |T|)` time, the
 following strategy shows how to obtain it in linear time, based 
 on the idea that as we iterate over the letters in the string 
