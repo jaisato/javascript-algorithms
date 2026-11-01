@@ -14,8 +14,35 @@ export default class RadixSort extends Sort {
     // Assumes all elements of array are of the same type
     const isArrayOfNumbers = this.isArrayOfNumbers(originalArray);
 
+    // The digit buckets only work for non-negative integers: -8 % 10 is -8, so
+    // negative numbers all fell into bucket 0 by the `element < divided` test
+    // and came out in input order, mixed with the zeros -
+    // [-2, -8, 4, -3, 0, -6, 3] was "sorted" to [-2, -8, -3, 0, -6, 3, 4].
+    // Negatives are sorted by magnitude on their own and put back in front,
+    // reversed: the larger the magnitude, the smaller the number.
+    if (isArrayOfNumbers && originalArray.some((element) => element < 0)) {
+      const negatives = originalArray.filter((element) => element < 0).map((element) => -element);
+      const nonNegatives = originalArray.filter((element) => element >= 0);
+
+      return [
+        ...this.sortRadix(negatives, true).reverse().map((element) => -element),
+        ...this.sortRadix(nonNegatives, true),
+      ];
+    }
+
+    return this.sortRadix(originalArray, isArrayOfNumbers);
+  }
+
+  /**
+   * @param {*[]} originalArray non-negative integers, or strings
+   * @param {boolean} isArrayOfNumbers
+   * @return {*[]}
+   */
+  sortRadix(originalArray, isArrayOfNumbers) {
     let sortedArray = [...originalArray];
-    const numPasses = this.determineNumPasses(sortedArray);
+    const numPasses = isArrayOfNumbers
+      ? this.getNumberOfDigits(sortedArray)
+      : this.determineNumPasses(sortedArray);
 
     for (let currentIndex = 0; currentIndex < numPasses; currentIndex += 1) {
       const buckets = isArrayOfNumbers
@@ -119,6 +146,22 @@ export default class RadixSort extends Sort {
     return array.reduce((acc, val) => {
       return val.length > acc ? val.length : acc;
     }, -Infinity);
+  }
+
+  /**
+   * Number of decimal digits of the largest element of an array of non-negative integers.
+   *
+   * Math.max(...array) spreads the array into arguments, which throws a RangeError once the
+   * array is longer than the engine's argument limit (around 10^5 elements), and its log10 is
+   * -Infinity when the largest element is 0.
+   *
+   * @param {number[]} array
+   * @return {number}
+   */
+  getNumberOfDigits(array) {
+    const max = array.reduce((acc, val) => (val > acc ? val : acc), 0);
+
+    return max > 0 ? Math.floor(Math.log10(max)) + 1 : 1;
   }
 
   /**
