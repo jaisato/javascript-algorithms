@@ -13,4 +13,15 @@ describe('zAlgorithm', () => {
     expect(zAlgorithm('abcxabcdabxaabcdabcabcdabcdabcy', 'abcdabca')).toEqual([12]);
     expect(zAlgorithm('abcxabcdabxaabaabaaaabcdabcdabcy', 'aabaabaaa')).toEqual([11]);
   });
+
+  it('should handle texts and words that contain the "$" character', () => {
+    expect(zAlgorithm('a$bab', '$')).toEqual([1]);
+    expect(zAlgorithm('b$bbba$a$bb', 'b')).toEqual([0, 2, 3, 4, 9, 10]);
+    expect(zAlgorithm('aa$ba$ba$ba', '$')).toEqual([2, 5, 8]);
+    expect(zAlgorithm('x$y$z', '$y$')).toEqual([1]);
+  });
+
+  it('should find overlapping occurrences', () => {
+    expect(zAlgorithm('aaaa', 'aa')).toEqual([0, 1, 2]);
+  });
 });

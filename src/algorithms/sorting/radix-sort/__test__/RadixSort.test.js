@@ -9,6 +9,23 @@ describe('RadixSort', () => {
     SortTester.testSort(RadixSort);
   });
 
+  it('should sort negative numbers', () => {
+    SortTester.testNegativeNumbersSort(RadixSort);
+
+    const sorter = new RadixSort();
+    expect(sorter.sort([-2, -8, 4, -3, 0, -6, 3])).toEqual([-8, -6, -3, -2, 0, 3, 4]);
+    expect(sorter.sort([-100, -5, -20, -1])).toEqual([-100, -20, -5, -1]);
+    expect(sorter.sort([0, -1])).toEqual([-1, 0]);
+  });
+
+  it('should sort arrays of zeros and long arrays', () => {
+    const sorter = new RadixSort();
+    expect(sorter.sort([0, 0, 0])).toEqual([0, 0, 0]);
+
+    const long = Array.from({ length: 200000 }, (_, i) => (i * 7919) % 200000);
+    expect(sorter.sort(long)).toEqual([...long].sort((a, b) => a - b));
+  });
+
   it('should visit array of strings n (number of strings) x m (length of longest element) times', () => {
     SortTester.testAlgorithmTimeComplexity(
       RadixSort,
