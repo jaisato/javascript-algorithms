@@ -252,4 +252,50 @@ describe('BinarySearchTreeNode', () => {
 
     expect(childNode.parent).toBeNull();
   });
+
+  it('should give the child of a removed node its new parent', () => {
+    const bstRootNode = new BinarySearchTreeNode();
+
+    bstRootNode.insert(10);
+    bstRootNode.insert(20);
+    bstRootNode.insert(30);
+    bstRootNode.insert(5);
+    bstRootNode.insert(1);
+
+    bstRootNode.remove(20);
+    bstRootNode.remove(5);
+
+    expect(bstRootNode.toString()).toBe('1,10,30');
+    expect(bstRootNode.right.value).toBe(30);
+    expect(bstRootNode.right.parent).toBe(bstRootNode);
+    expect(bstRootNode.left.value).toBe(1);
+    expect(bstRootNode.left.parent).toBe(bstRootNode);
+  });
+
+  it('should keep the parent of a node that takes the value of its successor', () => {
+    const bstRootNode = new BinarySearchTreeNode();
+
+    [10, 20, 5, 30, 15, 25].forEach((value) => bstRootNode.insert(value));
+
+    const nodeWithTwoChildren = bstRootNode.find(20);
+    bstRootNode.remove(20);
+
+    expect(bstRootNode.toString()).toBe('5,10,15,25,30');
+    expect(nodeWithTwoChildren.value).toBe(25);
+    expect(bstRootNode.right).toBe(nodeWithTwoChildren);
+    expect(nodeWithTwoChildren.parent).toBe(bstRootNode);
+  });
+
+  it('should take new values after the last one was removed', () => {
+    const bstRootNode = new BinarySearchTreeNode();
+
+    bstRootNode.insert(1);
+    bstRootNode.remove(1);
+    bstRootNode.insert(2);
+
+    expect(bstRootNode.toString()).toBe('2');
+    expect(bstRootNode.value).toBe(2);
+    expect(bstRootNode.left).toBeNull();
+    expect(bstRootNode.right).toBeNull();
+  });
 });

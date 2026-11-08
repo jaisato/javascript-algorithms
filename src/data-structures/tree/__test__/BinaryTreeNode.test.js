@@ -106,6 +106,30 @@ describe('BinaryTreeNode', () => {
     expect(rootNode.replaceChild(new BinaryTreeNode(), new BinaryTreeNode())).toBe(false);
   });
 
+  it('should make the replacement node a child of the node', () => {
+    const rootNode = new BinaryTreeNode(2);
+    const leftNode = new BinaryTreeNode(1);
+    const rightNode = new BinaryTreeNode(3);
+    const grandChildNode = new BinaryTreeNode(4);
+
+    rootNode
+      .setLeft(leftNode)
+      .setRight(rightNode);
+    rightNode.setRight(grandChildNode);
+
+    expect(rootNode.replaceChild(rightNode, grandChildNode)).toBe(true);
+    expect(rootNode.right).toBe(grandChildNode);
+    expect(grandChildNode.parent).toBe(rootNode);
+    expect(rightNode.parent).toBeNull();
+
+    const replacementNode = new BinaryTreeNode(0);
+
+    expect(rootNode.replaceChild(leftNode, replacementNode)).toBe(true);
+    expect(rootNode.left).toBe(replacementNode);
+    expect(replacementNode.parent).toBe(rootNode);
+    expect(leftNode.parent).toBeNull();
+  });
+
   it('should calculate node height', () => {
     const root = new BinaryTreeNode(1);
     const left = new BinaryTreeNode(3);
