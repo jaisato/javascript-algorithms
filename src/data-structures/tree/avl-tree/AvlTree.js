@@ -21,11 +21,25 @@ export default class AvlTree extends BinarySearchTree {
    * @return {boolean}
    */
   remove(value) {
-    // Do standard BST removal.
-    super.remove(value);
+    // The node the standard BST removal detaches: the one holding the value
+    // or, when it has two children, the smallest node of its right subtree,
+    // whose value moves up. Only the subtrees above it may get shorter, so
+    // they are balanced from there up to the root, as insert() does.
+    const nodeToRemove = this.root.find(value);
+    const detachedNode = nodeToRemove && nodeToRemove.left && nodeToRemove.right
+      ? nodeToRemove.right.findMin()
+      : nodeToRemove;
+    let currentNode = detachedNode ? detachedNode.parent : null;
 
-    // Balance the tree starting from the root node.
-    this.balance(this.root);
+    // Do standard BST removal.
+    const removed = super.remove(value);
+
+    while (currentNode) {
+      this.balance(currentNode);
+      currentNode = currentNode.parent;
+    }
+
+    return removed;
   }
 
   /**
@@ -33,21 +47,23 @@ export default class AvlTree extends BinarySearchTree {
    */
   balance(node) {
     // If balance factor is not OK then try to balance the node.
+    // After a removal the taller child may be balanced itself: a single
+    // rotation fixes that case too.
     if (node.balanceFactor > 1) {
       // Left rotation.
-      if (node.left.balanceFactor > 0) {
+      if (node.left.balanceFactor >= 0) {
         // Left-Left rotation
         this.rotateLeftLeft(node);
-      } else if (node.left.balanceFactor < 0) {
+      } else {
         // Left-Right rotation.
         this.rotateLeftRight(node);
       }
     } else if (node.balanceFactor < -1) {
       // Right rotation.
-      if (node.right.balanceFactor < 0) {
+      if (node.right.balanceFactor <= 0) {
         // Right-Right rotation
         this.rotateRightRight(node);
-      } else if (node.right.balanceFactor > 0) {
+      } else {
         // Right-Left rotation.
         this.rotateRightLeft(node);
       }
@@ -58,23 +74,25 @@ export default class AvlTree extends BinarySearchTree {
    * @param {BinarySearchTreeNode} rootNode
    */
   rotateLeftLeft(rootNode) {
-    // Detach left node from root node.
+    const { parent } = rootNode;
     const leftNode = rootNode.left;
-    rootNode.setLeft(null);
+    const leftRightNode = leftNode.right;
 
-    // Make left node to be a child of rootNode's parent.
-    if (rootNode.parent) {
-      rootNode.parent.setLeft(leftNode);
+    // Detach left node from root node, and left node's right subtree from it.
+    rootNode.setLeft(null);
+    leftNode.setRight(null);
+
+    // Make left node take the place of root node, on the same side of the
+    // parent root node hung from.
+    if (parent) {
+      parent.replaceChild(rootNode, leftNode);
     } else if (rootNode === this.root) {
       // If root node is root then make left node to be a new root.
       this.root = leftNode;
     }
 
-    // If left node has a right child then detach it and
-    // attach it as a left child for rootNode.
-    if (leftNode.right) {
-      rootNode.setLeft(leftNode.right);
-    }
+    // The right subtree of left node becomes the left subtree of root node.
+    rootNode.setLeft(leftRightNode);
 
     // Attach rootNode to the right of leftNode.
     leftNode.setRight(rootNode);
@@ -84,25 +102,24 @@ export default class AvlTree extends BinarySearchTree {
    * @param {BinarySearchTreeNode} rootNode
    */
   rotateLeftRight(rootNode) {
-    // Detach left node from rootNode since it is going to be replaced.
     const leftNode = rootNode.left;
-    rootNode.setLeft(null);
-
-    // Detach right node from leftNode.
     const leftRightNode = leftNode.right;
+    const leftRightLeftNode = leftRightNode.left;
+
+    // Detach the nodes that move before attaching them anywhere else:
+    // setLeft() and setRight() reset the parent of the node they replace.
+    rootNode.setLeft(null);
     leftNode.setRight(null);
+    leftRightNode.setLeft(null);
 
     // Preserve leftRightNode's left subtree.
-    if (leftRightNode.left) {
-      leftNode.setRight(leftRightNode.left);
-      leftRightNode.setLeft(null);
-    }
-
-    // Attach leftRightNode to the rootNode.
-    rootNode.setLeft(leftRightNode);
+    leftNode.setRight(leftRightLeftNode);
 
     // Attach leftNode as left node for leftRight node.
     leftRightNode.setLeft(leftNode);
+
+    // Attach leftRightNode to the rootNode.
+    rootNode.setLeft(leftRightNode);
 
     // Do left-left rotation.
     this.rotateLeftLeft(rootNode);
@@ -112,24 +129,24 @@ export default class AvlTree extends BinarySearchTree {
    * @param {BinarySearchTreeNode} rootNode
    */
   rotateRightLeft(rootNode) {
-    // Detach right node from rootNode since it is going to be replaced.
     const rightNode = rootNode.right;
-    rootNode.setRight(null);
-
-    // Detach left node from rightNode.
     const rightLeftNode = rightNode.left;
+    const rightLeftRightNode = rightLeftNode.right;
+
+    // Detach the nodes that move before attaching them anywhere else:
+    // setLeft() and setRight() reset the parent of the node they replace.
+    rootNode.setRight(null);
     rightNode.setLeft(null);
+    rightLeftNode.setRight(null);
 
-    if (rightLeftNode.right) {
-      rightNode.setLeft(rightLeftNode.right);
-      rightLeftNode.setRight(null);
-    }
-
-    // Attach rightLeftNode to the rootNode.
-    rootNode.setRight(rightLeftNode);
+    // Preserve rightLeftNode's right subtree.
+    rightNode.setLeft(rightLeftRightNode);
 
     // Attach rightNode as right node for rightLeft node.
     rightLeftNode.setRight(rightNode);
+
+    // Attach rightLeftNode to the rootNode.
+    rootNode.setRight(rightLeftNode);
 
     // Do right-right rotation.
     this.rotateRightRight(rootNode);
@@ -139,23 +156,25 @@ export default class AvlTree extends BinarySearchTree {
    * @param {BinarySearchTreeNode} rootNode
    */
   rotateRightRight(rootNode) {
-    // Detach right node from root node.
+    const { parent } = rootNode;
     const rightNode = rootNode.right;
-    rootNode.setRight(null);
+    const rightLeftNode = rightNode.left;
 
-    // Make right node to be a child of rootNode's parent.
-    if (rootNode.parent) {
-      rootNode.parent.setRight(rightNode);
+    // Detach right node from root node, and right node's left subtree from it.
+    rootNode.setRight(null);
+    rightNode.setLeft(null);
+
+    // Make right node take the place of root node, on the same side of the
+    // parent root node hung from.
+    if (parent) {
+      parent.replaceChild(rootNode, rightNode);
     } else if (rootNode === this.root) {
       // If root node is root then make right node to be a new root.
       this.root = rightNode;
     }
 
-    // If right node has a left child then detach it and
-    // attach it as a right child for rootNode.
-    if (rightNode.left) {
-      rootNode.setRight(rightNode.left);
-    }
+    // The left subtree of right node becomes the right subtree of root node.
+    rootNode.setRight(rightLeftNode);
 
     // Attach rootNode to the left of rightNode.
     rightNode.setLeft(rootNode);

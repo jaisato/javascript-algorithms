@@ -1,5 +1,37 @@
 import AvlTree from '../AvlTree';
 
+/**
+ * Checks the AVL invariants of a subtree: each child points back to its
+ * parent and no node has one side more than one level taller than the other.
+ */
+function expectBalancedSubtree(node, parent = null) {
+  if (!node) {
+    return;
+  }
+
+  expect(node.parent).toBe(parent);
+  expect(Math.abs(node.balanceFactor)).toBeLessThanOrEqual(1);
+
+  expectBalancedSubtree(node.left, node);
+  expectBalancedSubtree(node.right, node);
+}
+
+/**
+ * A fixed shuffle of 1..size, so the test is the same on every run.
+ */
+function shuffledValues(size, seed) {
+  const values = Array.from({ length: size }, (value, index) => index + 1);
+  let state = seed;
+
+  for (let index = size - 1; index > 0; index -= 1) {
+    state = (state * 1103515245 + 12345) % 2147483648;
+    const swapIndex = state % (index + 1);
+    [values[index], values[swapIndex]] = [values[swapIndex], values[index]];
+  }
+
+  return values;
+}
+
 describe('AvlTree', () => {
   it('should do simple left-left rotation', () => {
     const tree = new AvlTree();
@@ -299,5 +331,131 @@ describe('AvlTree', () => {
     expect(tree.root.value).toBe(4);
     expect(tree.root.height).toBe(2);
     expect(tree.root.balanceFactor).toBe(0);
+  });
+
+  it('should do left-left rotation under a right child', () => {
+    const tree = new AvlTree();
+
+    [10, 5, 20, 15, 12].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('5,10,12,15,20');
+    expect(tree.root.value).toBe(10);
+    expect(tree.root.left.value).toBe(5);
+    expect(tree.root.right.value).toBe(15);
+    expect(tree.root.right.left.value).toBe(12);
+    expect(tree.root.right.right.value).toBe(20);
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should do right-right rotation under a left child', () => {
+    const tree = new AvlTree();
+
+    [20, 10, 30, 15, 18].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('10,15,18,20,30');
+    expect(tree.root.value).toBe(20);
+    expect(tree.root.left.value).toBe(15);
+    expect(tree.root.left.left.value).toBe(10);
+    expect(tree.root.left.right.value).toBe(18);
+    expect(tree.root.right.value).toBe(30);
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should do left-right rotation under a right child', () => {
+    const tree = new AvlTree();
+
+    [10, 5, 20, 15, 17].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('5,10,15,17,20');
+    expect(tree.root.value).toBe(10);
+    expect(tree.root.right.value).toBe(17);
+    expect(tree.root.right.left.value).toBe(15);
+    expect(tree.root.right.right.value).toBe(20);
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should do right-left rotation under a left child', () => {
+    const tree = new AvlTree();
+
+    [20, 10, 30, 15, 12].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('10,12,15,20,30');
+    expect(tree.root.value).toBe(20);
+    expect(tree.root.left.value).toBe(12);
+    expect(tree.root.left.left.value).toBe(10);
+    expect(tree.root.left.right.value).toBe(15);
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should rebalance below the root after removal', () => {
+    const tree = new AvlTree();
+
+    [20, 10, 30, 5, 15, 25, 40, 50].forEach((value) => tree.insert(value));
+    expectBalancedSubtree(tree.root);
+
+    tree.remove(25);
+
+    expect(tree.toString()).toBe('5,10,15,20,30,40,50');
+    expect(tree.root.value).toBe(20);
+    expect(tree.root.right.value).toBe(40);
+    expect(tree.root.right.left.value).toBe(30);
+    expect(tree.root.right.right.value).toBe(50);
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should rotate after removal when the taller child is itself balanced', () => {
+    const leftHeavyTree = new AvlTree();
+
+    [20, 10, 30, 5, 15].forEach((value) => leftHeavyTree.insert(value));
+    leftHeavyTree.remove(30);
+
+    expect(leftHeavyTree.toString()).toBe('5,10,15,20');
+    expect(leftHeavyTree.root.value).toBe(10);
+    expect(leftHeavyTree.root.right.value).toBe(20);
+    expect(leftHeavyTree.root.right.left.value).toBe(15);
+    expectBalancedSubtree(leftHeavyTree.root);
+
+    const rightHeavyTree = new AvlTree();
+
+    [10, 5, 20, 15, 25].forEach((value) => rightHeavyTree.insert(value));
+    rightHeavyTree.remove(5);
+
+    expect(rightHeavyTree.toString()).toBe('10,15,20,25');
+    expect(rightHeavyTree.root.value).toBe(20);
+    expect(rightHeavyTree.root.left.value).toBe(10);
+    expect(rightHeavyTree.root.left.right.value).toBe(15);
+    expectBalancedSubtree(rightHeavyTree.root);
+  });
+
+  it('should not bring a removed value back on the next insertion', () => {
+    const tree = new AvlTree();
+
+    [10, 5, 20, 30].forEach((value) => tree.insert(value));
+    tree.remove(20);
+    tree.insert(40);
+
+    expect(tree.contains(20)).toBe(false);
+    expect(tree.toString()).toBe('5,10,30,40');
+    expectBalancedSubtree(tree.root);
+  });
+
+  it('should stay balanced through many insertions and removals', () => {
+    const tree = new AvlTree();
+    const inserted = shuffledValues(64, 7);
+    const removed = shuffledValues(64, 11).slice(0, 48);
+    const remaining = new Set(inserted);
+
+    inserted.forEach((value) => {
+      tree.insert(value);
+      expectBalancedSubtree(tree.root);
+    });
+
+    removed.forEach((value) => {
+      tree.remove(value);
+      remaining.delete(value);
+
+      expect(tree.toString()).toBe([...remaining].sort((a, b) => a - b).join(','));
+      expectBalancedSubtree(tree.root);
+    });
   });
 });
