@@ -212,9 +212,66 @@ describe('floydWarshall', () => {
     expect(nextVertices[vertexFIndex][vertexFIndex]).toBe(null);
     expect(nextVertices[vertexAIndex][vertexBIndex]).toBe(vertexC);
     expect(nextVertices[vertexAIndex][vertexCIndex]).toBe(vertexA);
-    expect(nextVertices[vertexFIndex][vertexBIndex]).toBe(vertexE);
-    expect(nextVertices[vertexEIndex][vertexBIndex]).toBe(vertexD);
+    // F -> E -> D -> A -> C -> B and E -> D -> A -> C -> B: B is reached from C.
+    // These two used to be E and D, the last middle vertex tried, and
+    // following them back gave the edges E -> B and D -> B, which don't exist.
+    expect(nextVertices[vertexFIndex][vertexBIndex]).toBe(vertexC);
+    expect(nextVertices[vertexEIndex][vertexBIndex]).toBe(vertexC);
     expect(nextVertices[vertexDIndex][vertexBIndex]).toBe(vertexC);
     expect(nextVertices[vertexCIndex][vertexBIndex]).toBe(vertexC);
+  });
+
+  it('should rebuild every shortest path from the vertices before the end', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+    const vertexD = new GraphVertex('D');
+
+    const graph = new Graph(true);
+
+    // C is tried as a middle vertex before B: B -> C -> D is found first and
+    // then A -> B -> C -> D, with B as the last middle vertex. The vertex
+    // before D is still C.
+    graph
+      .addVertex(vertexA)
+      .addVertex(vertexD)
+      .addVertex(vertexC)
+      .addVertex(vertexB)
+      .addEdge(new GraphEdge(vertexA, vertexB, 1))
+      .addEdge(new GraphEdge(vertexB, vertexC, 1))
+      .addEdge(new GraphEdge(vertexC, vertexD, 1))
+      .addEdge(new GraphEdge(vertexA, vertexD, 10));
+
+    const { distances, nextVertices } = floydWarshall(graph);
+    const vertices = graph.getAllVertices();
+
+    vertices.forEach((startVertex, startIndex) => {
+      vertices.forEach((endVertex, endIndex) => {
+        if (startIndex === endIndex || distances[startIndex][endIndex] === Infinity) {
+          return;
+        }
+
+        // Walk back from the end vertex: every step must be a real edge and
+        // the edges must add up to the shortest distance. A shortest path
+        // has fewer edges than there are vertices.
+        let pathWeight = 0;
+        let currentIndex = endIndex;
+        for (let step = 0; currentIndex !== startIndex && step < vertices.length; step += 1) {
+          const previousVertex = nextVertices[startIndex][currentIndex];
+          const edge = graph.findEdge(previousVertex, vertices[currentIndex]);
+
+          expect(edge).not.toBeNull();
+
+          pathWeight += edge.weight;
+          currentIndex = vertices.indexOf(previousVertex);
+        }
+
+        expect(currentIndex).toBe(startIndex);
+        expect(pathWeight).toBe(distances[startIndex][endIndex]);
+      });
+    });
+
+    expect(distances[vertices.indexOf(vertexA)][vertices.indexOf(vertexD)]).toBe(3);
+    expect(nextVertices[vertices.indexOf(vertexA)][vertices.indexOf(vertexD)]).toBe(vertexC);
   });
 });

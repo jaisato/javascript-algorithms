@@ -60,13 +60,17 @@ export default function floydWarshall(graph) {
         if (distances[startIndex][endIndex] > distViaMiddle) {
           // We've found a shortest pass via middle vertex.
           distances[startIndex][endIndex] = distViaMiddle;
-          nextVertices[startIndex][endIndex] = middleVertex;
+          // The new path ends with the path from middleVertex to endVertex,
+          // so the vertex before endVertex is the one on that path. It is
+          // middleVertex only when middleVertex leads straight to endVertex.
+          nextVertices[startIndex][endIndex] = nextVertices[middleIndex][endIndex];
         }
       });
     });
   });
 
   // Shortest distance from x to y: distance[x][y].
-  // Next vertex after x one in path from x to y: nextVertices[x][y].
+  // Vertex right before y in the shortest path from x to y: nextVertices[x][y].
+  // Following it back from y rebuilds the whole path.
   return { distances, nextVertices };
 }
