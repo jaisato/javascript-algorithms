@@ -13,4 +13,9 @@ describe('fibonacci', () => {
     expect(fibonacci(9)).toEqual([1, 1, 2, 3, 5, 8, 13, 21, 34]);
     expect(fibonacci(10)).toEqual([1, 1, 2, 3, 5, 8, 13, 21, 34, 55]);
   });
+
+  it('should return an empty sequence for zero numbers', () => {
+    // It used to loop forever.
+    expect(fibonacci(0)).toEqual([]);
+  });
 });

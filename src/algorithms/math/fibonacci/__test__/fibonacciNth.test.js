@@ -30,4 +30,9 @@ describe('fibonacciNth', () => {
     expect(fibonacciNth(80)).toBe(23416728348467684);
     expect(fibonacciNth(90)).toBe(2880067194370816000);
   });
+
+  it('should return 0 for position 0', () => {
+    // It used to loop forever.
+    expect(fibonacciNth(0)).toBe(0);
+  });
 });
