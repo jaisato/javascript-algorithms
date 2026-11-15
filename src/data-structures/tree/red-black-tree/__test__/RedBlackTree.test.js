@@ -1,5 +1,50 @@
 import RedBlackTree from '../RedBlackTree';
 
+/**
+ * Lists every broken red-black rule in the tree, and every node whose parent
+ * pointer does not point to the node it hangs from.
+ *
+ * @param {RedBlackTree} tree
+ * @return {string[]}
+ */
+function findViolations(tree) {
+  const violations = [];
+
+  const visit = (node, parent) => {
+    if (!node) {
+      return 1;
+    }
+
+    if (node.parent !== parent) {
+      violations.push(`${node.value} has a wrong parent`);
+    }
+
+    if (
+      tree.isNodeRed(node)
+      && [node.left, node.right].some((child) => child && tree.isNodeRed(child))
+    ) {
+      violations.push(`${node.value} is red with a red child`);
+    }
+
+    const leftBlackHeight = visit(node.left, node);
+    const rightBlackHeight = visit(node.right, node);
+
+    if (leftBlackHeight !== rightBlackHeight) {
+      violations.push(`${node.value} has unequal black heights`);
+    }
+
+    return leftBlackHeight + (tree.isNodeBlack(node) ? 1 : 0);
+  };
+
+  if (!tree.isNodeBlack(tree.root)) {
+    violations.push('the root is not black');
+  }
+
+  visit(tree.root, null);
+
+  return violations;
+}
+
 describe('RedBlackTree', () => {
   it('should always color first inserted node as black', () => {
     const tree = new RedBlackTree();
@@ -320,5 +365,55 @@ describe('RedBlackTree', () => {
     };
 
     expect(removeNodeFromRedBlackTree).toThrow();
+  });
+
+  it('should keep parent pointers right after rotations below the root', () => {
+    const tree = new RedBlackTree();
+
+    // The rotations for 5, 7 and 9 happen under the root and used to leave
+    // the rotated grand parent (3, 5 and 7) with no parent.
+    [1, 2, 3, 4, 5, 6, 7, 8, 9].forEach((value) => {
+      tree.insert(value);
+      expect(findViolations(tree)).toEqual([]);
+    });
+
+    expect(tree.toString()).toBe('1,2,3,4,5,6,7,8,9');
+  });
+
+  it('should not recolor a node when its value is inserted again', () => {
+    const tree = new RedBlackTree();
+
+    tree.insert(10);
+    const node5 = tree.insert(5);
+    tree.insert(15);
+    tree.insert(1);
+
+    expect(tree.isNodeBlack(node5)).toBe(true);
+
+    expect(tree.insert(5)).toBe(node5);
+
+    expect(tree.isNodeBlack(node5)).toBe(true);
+    expect(findViolations(tree)).toEqual([]);
+    expect(tree.toString()).toBe('1,5,10,15');
+  });
+
+  it('should keep the red-black rules for any insertion order', () => {
+    const tree = new RedBlackTree();
+    const values = [];
+
+    // A fixed permutation of 0..96, so that every rotation and recoloring
+    // case shows up on the left and on the right of the root. It used to
+    // throw a TypeError at the 32nd value.
+    for (let index = 0; index < 97; index += 1) {
+      values.push((index * 37) % 97);
+    }
+
+    values.forEach((value) => {
+      tree.insert(value);
+      expect(findViolations(tree)).toEqual([]);
+    });
+
+    expect(tree.toString()).toBe([...values].sort((a, b) => a - b).toString());
+    expect(tree.root.height).toBeLessThanOrEqual(2 * Math.log2(values.length + 1));
   });
 });

@@ -17,6 +17,13 @@ export default class RedBlackTree extends BinarySearchTree {
   insert(value) {
     const insertedNode = super.insert(value);
 
+    // For a value that is already in the tree the BST hands back the node
+    // that holds it. That node is colored and balanced already: painting it
+    // red again would break the red-black rules.
+    if (this.isNodeColored(insertedNode)) {
+      return insertedNode;
+    }
+
     // if (!this.root.left && !this.root.right) {
     if (this.nodeComparator.equal(insertedNode, this.root)) {
       // Make root to always be black.
@@ -46,6 +53,14 @@ export default class RedBlackTree extends BinarySearchTree {
   balance(node) {
     // If it is a root node then nothing to balance here.
     if (this.nodeComparator.equal(node, this.root)) {
+      return;
+    }
+
+    // Only a red node with a red parent breaks the rules. A black node is fine
+    // under any parent: after a rotation the new grand parent is black and,
+    // if its parent was red, "fixing" it would recolor a valid tree into one
+    // with unequal black heights.
+    if (this.isNodeBlack(node)) {
       return;
     }
 
@@ -137,8 +152,11 @@ export default class RedBlackTree extends BinarySearchTree {
     // grand parent's left subtree.
     const parentRightNode = parentNode.right;
 
-    // Make grandParentNode to be right child of parentNode.
-    parentNode.setRight(grandParentNode);
+    // Detach the nodes that move before attaching them anywhere else:
+    // setLeft() and setRight() reset the parent of the node they replace, so
+    // attaching grandParentNode first left it with no parent once parentNode
+    // took its place under grandGrandParent.
+    parentNode.setRight(null);
 
     // Move child's right subtree to grandParentNode's left subtree.
     grandParentNode.setLeft(parentRightNode);
@@ -154,6 +172,9 @@ export default class RedBlackTree extends BinarySearchTree {
       // Make parent node a root
       parentNode.parent = null;
     }
+
+    // Make grandParentNode to be right child of parentNode.
+    parentNode.setRight(grandParentNode);
 
     // Swap colors of granParent and parent nodes.
     this.swapNodeColors(parentNode, grandParentNode);
@@ -177,14 +198,18 @@ export default class RedBlackTree extends BinarySearchTree {
     // parent's right sub-tree.
     const childLeftNode = childNode.left;
 
-    // Make parentNode to be a left child of childNode node.
-    childNode.setLeft(parentNode);
+    // Detach the nodes that move before attaching them anywhere else (see
+    // leftLeftRotation()).
+    childNode.setLeft(null);
 
     // Move child's left subtree to parent's right subtree.
     parentNode.setRight(childLeftNode);
 
     // Put left-right node in place of left node.
     grandParentNode.setLeft(childNode);
+
+    // Make parentNode to be a left child of childNode node.
+    childNode.setLeft(parentNode);
 
     // Now we're ready to do left-left rotation.
     return this.leftLeftRotation(grandParentNode);
@@ -212,8 +237,9 @@ export default class RedBlackTree extends BinarySearchTree {
     // grand parent's right subtree.
     const parentLeftNode = parentNode.left;
 
-    // Make grandParentNode to be left child of parentNode.
-    parentNode.setLeft(grandParentNode);
+    // Detach the nodes that move before attaching them anywhere else (see
+    // leftLeftRotation()).
+    parentNode.setLeft(null);
 
     // Transfer all left nodes from parent to right sub-tree of grandparent.
     grandParentNode.setRight(parentLeftNode);
@@ -229,6 +255,9 @@ export default class RedBlackTree extends BinarySearchTree {
       // Make parent node a root.
       parentNode.parent = null;
     }
+
+    // Make grandParentNode to be left child of parentNode.
+    parentNode.setLeft(grandParentNode);
 
     // Swap colors of granParent and parent nodes.
     this.swapNodeColors(parentNode, grandParentNode);
@@ -252,14 +281,18 @@ export default class RedBlackTree extends BinarySearchTree {
     // parent's left sub-tree.
     const childRightNode = childNode.right;
 
-    // Make parentNode to be a right child of childNode.
-    childNode.setRight(parentNode);
+    // Detach the nodes that move before attaching them anywhere else (see
+    // leftLeftRotation()).
+    childNode.setRight(null);
 
     // Move child's right subtree to parent's left subtree.
     parentNode.setLeft(childRightNode);
 
     // Put childNode node in place of parentNode.
     grandParentNode.setRight(childNode);
+
+    // Make parentNode to be a right child of childNode.
+    childNode.setRight(parentNode);
 
     // Now we're ready to do right-right rotation.
     return this.rightRightRotation(grandParentNode);
