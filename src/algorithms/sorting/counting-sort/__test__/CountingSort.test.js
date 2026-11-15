@@ -22,6 +22,16 @@ describe('CountingSort', () => {
     SortTester.testNegativeNumbersSort(CountingSort);
   });
 
+  it('should make buckets only for the range of values in the array', () => {
+    const sorter = new CountingSort();
+    const big = 2 ** 40;
+
+    // The range used to reach down (or up) to 0, so these needed more than
+    // 2^40 buckets and threw a RangeError.
+    expect(sorter.sort([big + 2, big, big + 1])).toEqual([big, big + 1, big + 2]);
+    expect(sorter.sort([-big, -big - 2, -big - 1])).toEqual([-big - 2, -big - 1, -big]);
+  });
+
   it('should allow to use specify max/min integer value in array to make sorting faster', () => {
     const visitingCallback = jest.fn();
     const sorter = new CountingSort({ visitingCallback });

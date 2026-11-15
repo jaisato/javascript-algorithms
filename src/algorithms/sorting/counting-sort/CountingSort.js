@@ -8,8 +8,12 @@ export default class CountingSort extends Sort {
    */
   sort(originalArray, smallestElement = undefined, biggestElement = undefined) {
     // Init biggest and smallest elements in array in order to build number bucket array later.
-    let detectedSmallestElement = smallestElement || 0;
-    let detectedBiggestElement = biggestElement || 0;
+    // The detection starts from an element of the array: starting from 0 put 0
+    // in the range of every array, so [1000000, 1000001] needed a million
+    // buckets instead of two.
+    const [firstElement = 0] = originalArray;
+    let detectedSmallestElement = smallestElement === undefined ? firstElement : smallestElement;
+    let detectedBiggestElement = biggestElement === undefined ? firstElement : biggestElement;
 
     if (smallestElement === undefined || biggestElement === undefined) {
       originalArray.forEach((element) => {
