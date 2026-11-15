@@ -48,4 +48,45 @@ describe('bfTravellingSalesman', () => {
     expect(salesmanPath[2].getKey()).toEqual(vertexD.getKey());
     expect(salesmanPath[3].getKey()).toEqual(vertexC.getKey());
   });
+
+  it('should count the edge back to the start city', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+    const vertexD = new GraphVertex('D');
+
+    const graph = new Graph();
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB, 1))
+      .addEdge(new GraphEdge(vertexB, vertexC, 1))
+      .addEdge(new GraphEdge(vertexC, vertexD, 1))
+      .addEdge(new GraphEdge(vertexD, vertexA, 100))
+      .addEdge(new GraphEdge(vertexA, vertexC, 10))
+      .addEdge(new GraphEdge(vertexB, vertexD, 10));
+
+    // A -> B -> C -> D is the lightest path (3), but going back from D costs
+    // 100: that tour weighs 103, while A -> B -> D -> C -> A weighs 22.
+    const salesmanPath = bfTravellingSalesman(graph);
+
+    expect(salesmanPath.map((vertex) => vertex.getKey())).toEqual(['A', 'B', 'D', 'C']);
+  });
+
+  it('should not return a tour that skips a city', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+    const vertexD = new GraphVertex('D');
+
+    const graph = new Graph();
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB, 1))
+      .addEdge(new GraphEdge(vertexB, vertexC, 1))
+      .addEdge(new GraphEdge(vertexC, vertexA, 1))
+      .addEdge(new GraphEdge(vertexA, vertexD, 1));
+
+    // D only links to A, so no tour visits every city once. A -> D used to
+    // come out as the answer, with A -> B -> C (which skips D) as another
+    // candidate.
+    expect(bfTravellingSalesman(graph)).toEqual([]);
+  });
 });
