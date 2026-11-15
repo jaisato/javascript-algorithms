@@ -34,13 +34,16 @@ export default function fastFourierTransform(inputData, inverse = false) {
   const bitsCount = bitLength(inputData.length - 1);
   const N = 1 << bitsCount;
 
-  while (inputData.length < N) {
-    inputData.push(new ComplexNumber());
+  // Pad a copy with zeros up to a power of two: padding inputData itself
+  // used to append those zeros to the caller's array.
+  const paddedInputData = [...inputData];
+  while (paddedInputData.length < N) {
+    paddedInputData.push(new ComplexNumber());
   }
 
   const output = [];
   for (let dataSampleIndex = 0; dataSampleIndex < N; dataSampleIndex += 1) {
-    output[dataSampleIndex] = inputData[reverseBits(dataSampleIndex, bitsCount)];
+    output[dataSampleIndex] = paddedInputData[reverseBits(dataSampleIndex, bitsCount)];
   }
 
   for (let blockLength = 2; blockLength <= N; blockLength *= 2) {
@@ -69,7 +72,11 @@ export default function fastFourierTransform(inputData, inverse = false) {
 
   if (inverse) {
     for (let signalId = 0; signalId < N; signalId += 1) {
-      output[signalId] /= N;
+      // The samples are ComplexNumber objects: "/=" turned each one into NaN.
+      output[signalId] = new ComplexNumber({
+        re: output[signalId].re / N,
+        im: output[signalId].im / N,
+      });
     }
   }
 

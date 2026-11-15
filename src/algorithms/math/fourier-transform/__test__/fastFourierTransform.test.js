@@ -13,16 +13,36 @@ function sequencesApproximatelyEqual(sequence1, sequence2, delta) {
   }
 
   for (let numberIndex = 0; numberIndex < sequence1.length; numberIndex += 1) {
-    if (Math.abs(sequence1[numberIndex].re - sequence2[numberIndex].re) > delta) {
+    // Written as "not within delta" so that NaN, which fails every comparison,
+    // counts as a difference. With "> delta" the inverse transform passed
+    // while it returned NaN for every sample.
+    if (!(Math.abs(sequence1[numberIndex].re - sequence2[numberIndex].re) <= delta)) {
       return false;
     }
 
-    if (Math.abs(sequence1[numberIndex].im - sequence2[numberIndex].im) > delta) {
+    if (!(Math.abs(sequence1[numberIndex].im - sequence2[numberIndex].im) <= delta)) {
       return false;
     }
   }
 
   return true;
+}
+
+/**
+ * The inverse transform gives back the input padded with zeros up to a power
+ * of two.
+ *
+ * @param {ComplexNumber[]} sequence
+ * @param {number} length
+ * @return {ComplexNumber[]}
+ */
+function padWithZeros(sequence, length) {
+  const paddedSequence = [...sequence];
+  while (paddedSequence.length < length) {
+    paddedSequence.push(new ComplexNumber());
+  }
+
+  return paddedSequence;
 }
 
 const delta = 1e-6;
@@ -35,7 +55,11 @@ describe('fastFourierTransform', () => {
     const invertedOutput = fastFourierTransform(output, true);
 
     expect(sequencesApproximatelyEqual(expectedOutput, output, delta)).toBe(true);
-    expect(sequencesApproximatelyEqual(input, invertedOutput, delta)).toBe(true);
+    expect(sequencesApproximatelyEqual(
+      padWithZeros(input, invertedOutput.length),
+      invertedOutput,
+      delta,
+    )).toBe(true);
   });
 
   it('should calculate the radix-2 discrete fourier transform #2', () => {
@@ -56,7 +80,11 @@ describe('fastFourierTransform', () => {
     const invertedOutput = fastFourierTransform(output, true);
 
     expect(sequencesApproximatelyEqual(expectedOutput, output, delta)).toBe(true);
-    expect(sequencesApproximatelyEqual(input, invertedOutput, delta)).toBe(true);
+    expect(sequencesApproximatelyEqual(
+      padWithZeros(input, invertedOutput.length),
+      invertedOutput,
+      delta,
+    )).toBe(true);
   });
 
   it('should calculate the radix-2 discrete fourier transform #3', () => {
@@ -96,6 +124,25 @@ describe('fastFourierTransform', () => {
     const invertedOutput = fastFourierTransform(output, true);
 
     expect(sequencesApproximatelyEqual(expectedOutput, output, delta)).toBe(true);
-    expect(sequencesApproximatelyEqual(input, invertedOutput, delta)).toBe(true);
+    expect(sequencesApproximatelyEqual(
+      padWithZeros(input, invertedOutput.length),
+      invertedOutput,
+      delta,
+    )).toBe(true);
+  });
+
+  it('should not pad the input array itself', () => {
+    const input = [
+      new ComplexNumber({ re: 1, im: 2 }),
+      new ComplexNumber({ re: 2, im: 3 }),
+      new ComplexNumber({ re: 8, im: 4 }),
+    ];
+
+    const output = fastFourierTransform(input);
+
+    // The transform works on four samples, but the zero it adds used to be
+    // pushed into the caller's array.
+    expect(output.length).toBe(4);
+    expect(input.length).toBe(3);
   });
 });
