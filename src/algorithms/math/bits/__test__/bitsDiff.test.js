@@ -10,4 +10,9 @@ describe('bitsDiff', () => {
     expect(bitsDiff(1, 2)).toBe(2);
     expect(bitsDiff(1, 3)).toBe(1);
   });
+
+  it('should calculate bits difference with negative numbers', () => {
+    expect(bitsDiff(-1, 0)).toBe(32);
+    expect(bitsDiff(-1, -2)).toBe(1);
+  });
 });

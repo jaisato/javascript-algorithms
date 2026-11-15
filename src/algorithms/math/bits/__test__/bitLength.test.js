@@ -11,4 +11,12 @@ describe('bitLength', () => {
     expect(bitLength(0b11110101)).toBe(8);
     expect(bitLength(0b00011110101)).toBe(8);
   });
+
+  it('should calculate the number of bits of numbers from 2^30 up', () => {
+    // These never returned: 1 << 31 is negative and 1 << 32 is 1 again.
+    expect(bitLength(2 ** 30)).toBe(31);
+    expect(bitLength((2 ** 31) - 1)).toBe(31);
+    expect(bitLength(2 ** 31)).toBe(32);
+    expect(bitLength((2 ** 32) - 1)).toBe(32);
+  });
 });

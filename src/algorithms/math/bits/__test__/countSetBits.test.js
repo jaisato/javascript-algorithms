@@ -12,4 +12,11 @@ describe('countSetBits', () => {
     expect(countSetBits(255)).toBe(8);
     expect(countSetBits(1023)).toBe(10);
   });
+
+  it('should count the set bits of negative numbers in two\'s complement', () => {
+    // These never returned: the signed shift keeps a negative number negative.
+    expect(countSetBits(-1)).toBe(32);
+    expect(countSetBits(-2)).toBe(31);
+    expect(countSetBits(-(2 ** 31))).toBe(1);
+  });
 });
