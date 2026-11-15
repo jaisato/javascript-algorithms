@@ -162,4 +162,49 @@ describe('depthFirstSearch', () => {
       expect(params.previousVertex).toEqual(leaveVertexParamsMap[callIndex].previousVertex);
     }
   });
+
+  it('should enter every vertex of an undirected graph once', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+    const vertexConstructor = new GraphVertex('constructor');
+
+    const graph = new Graph();
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB))
+      .addEdge(new GraphEdge(vertexB, vertexC))
+      .addEdge(new GraphEdge(vertexC, vertexA))
+      .addEdge(new GraphEdge(vertexC, vertexConstructor));
+
+    // Every edge leads back to A as well: A used to be entered twice, and the
+    // "constructor" vertex was never entered at all.
+    const enteredKeys = [];
+    depthFirstSearch(graph, vertexA, {
+      enterVertex: ({ currentVertex }) => enteredKeys.push(currentVertex.getKey()),
+    });
+
+    expect([...enteredKeys].sort()).toEqual(['A', 'B', 'C', 'constructor']);
+  });
+
+  it('should start afresh when the same callbacks are used again', () => {
+    const vertexA = new GraphVertex('A');
+    const vertexB = new GraphVertex('B');
+    const vertexC = new GraphVertex('C');
+
+    const graph = new Graph(true);
+    graph
+      .addEdge(new GraphEdge(vertexA, vertexB))
+      .addEdge(new GraphEdge(vertexB, vertexC));
+
+    const enterVertexCallback = jest.fn();
+    const callbacks = { enterVertex: enterVertexCallback };
+
+    // The default allowTraversal used to be stored in this object, so the
+    // second search reused the vertices seen by the first and stopped at A.
+    depthFirstSearch(graph, vertexA, callbacks);
+    depthFirstSearch(graph, vertexA, callbacks);
+
+    expect(enterVertexCallback).toHaveBeenCalledTimes(6);
+    expect(callbacks).toEqual({ enterVertex: enterVertexCallback });
+  });
 });

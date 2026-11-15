@@ -13,17 +13,27 @@ import Queue from '../../../data-structures/queue/Queue';
  */
 
 /**
+ * @param {GraphVertex} startVertex
  * @param {Callbacks} [callbacks]
  * @returns {Callbacks}
  */
-function initCallbacks(callbacks = {}) {
-  const initiatedCallback = callbacks;
+function initCallbacks(startVertex, callbacks = {}) {
+  // A new object: the defaults used to be written into the caller's one, so
+  // a second search with the same object reused the first search's default
+  // allowTraversal, which had already seen every vertex.
+  const initiatedCallback = {};
 
   const stubCallback = () => {};
 
   const allowTraversalCallback = (
     () => {
-      const seen = {};
+      // The start vertex is entered before any traversal is asked for, so it
+      // is seen from the beginning: otherwise any edge back to it (and in an
+      // undirected graph every edge goes both ways) entered it a second time.
+      // No prototype, so keys such as "constructor" are ordinary entries.
+      const seen = Object.create(null);
+      seen[startVertex.getKey()] = true;
+
       return ({ nextVertex }) => {
         if (!seen[nextVertex.getKey()]) {
           seen[nextVertex.getKey()] = true;
@@ -47,7 +57,7 @@ function initCallbacks(callbacks = {}) {
  * @param {Callbacks} [originalCallbacks]
  */
 export default function breadthFirstSearch(graph, startVertex, originalCallbacks) {
-  const callbacks = initCallbacks(originalCallbacks);
+  const callbacks = initCallbacks(startVertex, originalCallbacks);
   const vertexQueue = new Queue();
 
   // Do initial queue setup.
