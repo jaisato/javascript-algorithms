@@ -69,6 +69,11 @@ export default class Knapsack {
 
     this.selectedItems = [];
 
+    // With no items there is nothing to choose (and no first row to fill).
+    if (!this.possibleItems.length) {
+      return;
+    }
+
     // Create knapsack values matrix.
     const numberOfRows = this.possibleItems.length;
     const numberOfColumns = this.weightLimit;
@@ -116,37 +121,21 @@ export default class Knapsack {
     }
 
     // Now let's trace back the knapsack matrix to see what items we're going to add
-    // to the knapsack.
-    let itemIndex = this.possibleItems.length - 1;
+    // to the knapsack. Starting from the last item and the whole weight limit, an
+    // item is in the knapsack exactly when it raised the best value for the weight
+    // that is left: then its weight is no longer available for the items before it.
     let weightIndex = this.weightLimit;
 
-    while (itemIndex > 0) {
+    for (let itemIndex = this.possibleItems.length - 1; itemIndex >= 0; itemIndex -= 1) {
       const currentItem = this.possibleItems[itemIndex];
-      const prevItem = this.possibleItems[itemIndex - 1];
+      const valueWithoutCurrentItem = itemIndex > 0
+        ? knapsackMatrix[itemIndex - 1][weightIndex]
+        : 0;
 
-      // Check if matrix value came from top (from previous item).
-      // In this case this would mean that we need to include previous item
-      // to the list of selected items.
-      if (
-        knapsackMatrix[itemIndex][weightIndex]
-        && knapsackMatrix[itemIndex][weightIndex] === knapsackMatrix[itemIndex - 1][weightIndex]
-      ) {
-        // Check if there are several items with the same weight but with the different values.
-        // We need to add highest item in the matrix that is possible to get the highest value.
-        const prevSumValue = knapsackMatrix[itemIndex - 1][weightIndex];
-        const prevPrevSumValue = knapsackMatrix[itemIndex - 2][weightIndex];
-        if (
-          !prevSumValue
-          || (prevSumValue && prevPrevSumValue !== prevSumValue)
-        ) {
-          this.selectedItems.push(prevItem);
-        }
-      } else if (knapsackMatrix[itemIndex - 1][weightIndex - currentItem.weight]) {
-        this.selectedItems.push(prevItem);
+      if (knapsackMatrix[itemIndex][weightIndex] !== valueWithoutCurrentItem) {
+        this.selectedItems.push(currentItem);
         weightIndex -= currentItem.weight;
       }
-
-      itemIndex -= 1;
     }
   }
 
@@ -156,6 +145,8 @@ export default class Knapsack {
     this.sortPossibleItemsByValue();
     this.sortPossibleItemsByValuePerWeightRatio();
 
+    this.selectedItems = [];
+
     for (let itemIndex = 0; itemIndex < this.possibleItems.length; itemIndex += 1) {
       if (this.totalWeight < this.weightLimit) {
         const currentItem = this.possibleItems[itemIndex];
@@ -164,17 +155,22 @@ export default class Knapsack {
         const availableWeight = this.weightLimit - this.totalWeight;
         const maxPossibleItemsCount = Math.floor(availableWeight / currentItem.weight);
 
-        if (maxPossibleItemsCount > currentItem.itemsInStock) {
-          // If we have more items in stock then it is allowed to add
-          // let's add the maximum allowed number of them.
-          currentItem.quantity = currentItem.itemsInStock;
-        } else if (maxPossibleItemsCount) {
-          // In case if we don't have specified number of items in stock
-          // let's add only items we have in stock.
-          currentItem.quantity = maxPossibleItemsCount;
-        }
+        // Only add the item if at least one of them fits in the weight that is
+        // left. It used to be added anyway, with its previous quantity, over the
+        // weight limit.
+        if (maxPossibleItemsCount) {
+          if (maxPossibleItemsCount > currentItem.itemsInStock) {
+            // If we have more items in stock then it is allowed to add
+            // let's add the maximum allowed number of them.
+            currentItem.quantity = currentItem.itemsInStock;
+          } else {
+            // In case if we don't have specified number of items in stock
+            // let's add only items we have in stock.
+            currentItem.quantity = maxPossibleItemsCount;
+          }
 
-        this.selectedItems.push(currentItem);
+          this.selectedItems.push(currentItem);
+        }
       }
     }
   }
