@@ -1,5 +1,42 @@
 import AvlTree from '../AvlTree';
 
+/**
+ * Walks the whole tree and returns its values in order, failing the test if a
+ * parent link, the search order or an AVL balance factor is wrong.
+ *
+ * @param {AvlTree} tree
+ * @return {number[]}
+ */
+function checkAvlTree(tree) {
+  const values = [];
+  const problems = [];
+
+  // Returns the height of the subtree (0 for an empty one).
+  const walk = (node, parent, min, max) => {
+    if (!node || node.value === null) {
+      return 0;
+    }
+
+    if (node.parent !== parent) problems.push(`wrong parent at ${node.value}`);
+    if ((min !== null && node.value <= min) || (max !== null && node.value >= max)) {
+      problems.push(`out of order at ${node.value}`);
+    }
+
+    const leftHeight = walk(node.left, node, min, node.value);
+    values.push(node.value);
+    const rightHeight = walk(node.right, node, node.value, max);
+
+    if (Math.abs(leftHeight - rightHeight) > 1) problems.push(`unbalanced at ${node.value}`);
+
+    return Math.max(leftHeight, rightHeight) + 1;
+  };
+
+  walk(tree.root, null, null, null);
+  expect(problems).toEqual([]);
+
+  return values;
+}
+
 describe('AvlTree', () => {
   it('should do simple left-left rotation', () => {
     const tree = new AvlTree();
@@ -299,5 +336,88 @@ describe('AvlTree', () => {
     expect(tree.root.value).toBe(4);
     expect(tree.root.height).toBe(2);
     expect(tree.root.balanceFactor).toBe(0);
+  });
+
+  it('should keep the rest of the tree when rotating a right child to the right', () => {
+    const tree = new AvlTree();
+
+    // 70 is a right child and gets left-heavy: the rotation used to put 60 on
+    // the left of 50, dropping 40 and 30.
+    [50, 40, 70, 30, 60, 55].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('30,40,50,55,60,70');
+    expect(tree.root.value).toBe(50);
+    expect(tree.root.left.value).toBe(40);
+    expect(tree.root.right.value).toBe(60);
+    expect(checkAvlTree(tree)).toEqual([30, 40, 50, 55, 60, 70]);
+  });
+
+  it('should keep the rest of the tree when rotating a left child to the left', () => {
+    const tree = new AvlTree();
+
+    [50, 30, 70, 80, 40, 45].forEach((value) => tree.insert(value));
+
+    expect(tree.toString()).toBe('30,40,45,50,70,80');
+    expect(tree.root.value).toBe(50);
+    expect(tree.root.left.value).toBe(40);
+    expect(tree.root.right.value).toBe(70);
+    expect(checkAvlTree(tree)).toEqual([30, 40, 45, 50, 70, 80]);
+  });
+
+  it('should rebalance inner nodes after removal', () => {
+    const tree = new AvlTree();
+
+    [1, 2, 3, 4, 5, 6, 7, 8].forEach((value) => tree.insert(value));
+
+    // Removing 5 leaves 6 with only 7 -> 8 below it; the root stays balanced.
+    tree.remove(5);
+
+    expect(tree.toString()).toBe('1,2,3,4,6,7,8');
+    expect(tree.root.value).toBe(4);
+    expect(tree.root.right.value).toBe(7);
+    expect(tree.root.right.left.value).toBe(6);
+    expect(tree.root.right.right.value).toBe(8);
+    expect(checkAvlTree(tree)).toEqual([1, 2, 3, 4, 6, 7, 8]);
+  });
+
+  it('should rotate after removal when the heavier child is balanced', () => {
+    const tree = new AvlTree();
+
+    [1, 2, 3, 4, 5].forEach((value) => tree.insert(value));
+
+    // After removing 1 the root's right child (4) has balance factor 0.
+    tree.remove(1);
+
+    expect(tree.root.value).toBe(4);
+    expect(tree.root.left.value).toBe(2);
+    expect(tree.root.left.right.value).toBe(3);
+    expect(tree.root.right.value).toBe(5);
+    expect(checkAvlTree(tree)).toEqual([2, 3, 4, 5]);
+  });
+
+  it('should stay a valid AVL tree through a long run of inserts and removals', () => {
+    const tree = new AvlTree();
+    const expectedValues = new Set();
+
+    // Small deterministic linear congruential generator.
+    let seed = 42;
+    const nextRandom = (limit) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return Math.floor(seed / 65536) % limit;
+    };
+
+    for (let step = 0; step < 500; step += 1) {
+      const value = nextRandom(60);
+
+      if (expectedValues.has(value) && nextRandom(3) === 0) {
+        expect(tree.remove(value)).toBe(true);
+        expectedValues.delete(value);
+      } else {
+        tree.insert(value);
+        expectedValues.add(value);
+      }
+
+      expect(checkAvlTree(tree)).toEqual([...expectedValues].sort((a, b) => a - b));
+    }
   });
 });

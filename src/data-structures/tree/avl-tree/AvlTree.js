@@ -21,11 +21,33 @@ export default class AvlTree extends BinarySearchTree {
    * @return {boolean}
    */
   remove(value) {
-    // Do standard BST removal.
-    super.remove(value);
+    // Heights only change on the path above the node that is physically
+    // detached, so that is where rebalancing has to start. Balancing just the
+    // root left inner nodes out of balance after a removal.
+    const nodeToRemove = this.root.find(value);
+    let currentNode = null;
+    if (nodeToRemove && nodeToRemove.left && nodeToRemove.right) {
+      // Two children: the in-order successor is the node that goes away.
+      const nextBiggerNode = nodeToRemove.right.findMin();
+      currentNode = nextBiggerNode === nodeToRemove.right
+        ? nodeToRemove
+        : nextBiggerNode.parent;
+    } else if (nodeToRemove) {
+      // Leaf or one child: the parent loses a subtree. The root keeps its
+      // node object and only gets new contents.
+      currentNode = nodeToRemove.parent || nodeToRemove;
+    }
 
-    // Balance the tree starting from the root node.
-    this.balance(this.root);
+    // Do standard BST removal (it throws if the value is not in the tree).
+    const removed = super.remove(value);
+
+    // Let's move up to the root and check balance factors along the way.
+    while (currentNode) {
+      this.balance(currentNode);
+      currentNode = currentNode.parent;
+    }
+
+    return removed;
   }
 
   /**
@@ -33,21 +55,23 @@ export default class AvlTree extends BinarySearchTree {
    */
   balance(node) {
     // If balance factor is not OK then try to balance the node.
+    // A child with balance factor 0 only happens after a removal; a single
+    // rotation is the one that fixes it (it used to be left unbalanced).
     if (node.balanceFactor > 1) {
       // Left rotation.
-      if (node.left.balanceFactor > 0) {
+      if (node.left.balanceFactor >= 0) {
         // Left-Left rotation
         this.rotateLeftLeft(node);
-      } else if (node.left.balanceFactor < 0) {
+      } else {
         // Left-Right rotation.
         this.rotateLeftRight(node);
       }
     } else if (node.balanceFactor < -1) {
       // Right rotation.
-      if (node.right.balanceFactor < 0) {
+      if (node.right.balanceFactor <= 0) {
         // Right-Right rotation
         this.rotateRightRight(node);
-      } else if (node.right.balanceFactor > 0) {
+      } else {
         // Right-Left rotation.
         this.rotateRightLeft(node);
       }
@@ -62,9 +86,11 @@ export default class AvlTree extends BinarySearchTree {
     const leftNode = rootNode.left;
     rootNode.setLeft(null);
 
-    // Make left node to be a child of rootNode's parent.
+    // Make left node to be a child of rootNode's parent, on the same side
+    // rootNode was. Always using the left side dropped the parent's whole left
+    // subtree whenever rootNode was a right child.
     if (rootNode.parent) {
-      rootNode.parent.setLeft(leftNode);
+      rootNode.parent.replaceChild(rootNode, leftNode);
     } else if (rootNode === this.root) {
       // If root node is root then make left node to be a new root.
       this.root = leftNode;
@@ -143,9 +169,10 @@ export default class AvlTree extends BinarySearchTree {
     const rightNode = rootNode.right;
     rootNode.setRight(null);
 
-    // Make right node to be a child of rootNode's parent.
+    // Make right node to be a child of rootNode's parent, on the same side
+    // rootNode was (see rotateLeftLeft()).
     if (rootNode.parent) {
-      rootNode.parent.setRight(rightNode);
+      rootNode.parent.replaceChild(rootNode, rightNode);
     } else if (rootNode === this.root) {
       // If root node is root then make right node to be a new root.
       this.root = rightNode;
