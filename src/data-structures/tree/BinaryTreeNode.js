@@ -100,8 +100,11 @@ export default class BinaryTreeNode {
    * @return {BinaryTreeNode}
    */
   setLeft(node) {
-    // Reset parent for left node since it is going to be detached.
-    if (this.left) {
+    // Reset parent for left node since it is going to be detached. Only when
+    // it still points here: rotations re-attach a child somewhere else before
+    // replacing it, and clearing it then would orphan a node that is still in
+    // the tree.
+    if (this.left && this.left.parent === this) {
       this.left.parent = null;
     }
 
@@ -121,8 +124,9 @@ export default class BinaryTreeNode {
    * @return {BinaryTreeNode}
    */
   setRight(node) {
-    // Reset parent for right node since it is going to be detached.
-    if (this.right) {
+    // Reset parent for right node since it is going to be detached (only when
+    // it still points here, see setLeft()).
+    if (this.right && this.right.parent === this) {
       this.right.parent = null;
     }
 
@@ -143,12 +147,12 @@ export default class BinaryTreeNode {
    */
   removeChild(nodeToRemove) {
     if (this.left && this.nodeComparator.equal(this.left, nodeToRemove)) {
-      this.left = null;
+      this.setLeft(null);
       return true;
     }
 
     if (this.right && this.nodeComparator.equal(this.right, nodeToRemove)) {
-      this.right = null;
+      this.setRight(null);
       return true;
     }
 
@@ -165,13 +169,15 @@ export default class BinaryTreeNode {
       return false;
     }
 
+    // Go through the setters so that the replacement gets this node as its
+    // parent and the replaced node stops pointing here.
     if (this.left && this.nodeComparator.equal(this.left, nodeToReplace)) {
-      this.left = replacementNode;
+      this.setLeft(replacementNode);
       return true;
     }
 
     if (this.right && this.nodeComparator.equal(this.right, nodeToReplace)) {
-      this.right = replacementNode;
+      this.setRight(replacementNode);
       return true;
     }
 

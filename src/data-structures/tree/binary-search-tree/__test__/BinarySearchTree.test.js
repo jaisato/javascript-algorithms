@@ -95,4 +95,60 @@ describe('BinarySearchTree', () => {
     expect(bst.toString()).toBe('-20,-10,4,6,10,20,25');
     expect(bst.root.height).toBe(3);
   });
+
+  it('should really remove a node that moved up after its parent was removed', () => {
+    const bst = new BinarySearchTree();
+
+    bst.insert(10);
+    bst.insert(5);
+    bst.insert(3);
+
+    bst.remove(5);
+
+    expect(bst.toString()).toBe('3,10');
+    expect(bst.root.left.value).toBe(3);
+    expect(bst.root.left.parent).toBe(bst.root);
+
+    bst.remove(3);
+
+    expect(bst.toString()).toBe('10');
+    expect(bst.contains(3)).toBe(false);
+  });
+
+  it('should keep the parent of a node with two children that is removed in place', () => {
+    const bst = new BinarySearchTree();
+
+    bst.insert(10);
+    bst.insert(5);
+    bst.insert(20);
+    bst.insert(3);
+    bst.insert(7);
+
+    bst.remove(5);
+
+    expect(bst.toString()).toBe('3,7,10,20');
+    expect(bst.root.left.value).toBe(7);
+    expect(bst.root.left.parent).toBe(bst.root);
+
+    bst.remove(7);
+
+    expect(bst.toString()).toBe('3,10,20');
+    expect(bst.root.left.value).toBe(3);
+    expect(bst.root.left.parent).toBe(bst.root);
+  });
+
+  it('should accept new values after the last one is removed', () => {
+    const bst = new BinarySearchTree();
+
+    bst.insert(1);
+    bst.remove(1);
+
+    expect(bst.toString()).toBe('');
+
+    bst.insert(2);
+
+    expect(bst.toString()).toBe('2');
+    expect(bst.root.value).toBe(2);
+    expect(bst.contains(2)).toBe(true);
+  });
 });
