@@ -17,6 +17,13 @@ export default class RedBlackTree extends BinarySearchTree {
   insert(value) {
     const insertedNode = super.insert(value);
 
+    // The BST returns the existing node for a value that is already in the
+    // tree, and only new nodes are uncolored. Repainting an existing node red
+    // and balancing it again broke the black-height rule (or crashed).
+    if (this.isNodeColored(insertedNode)) {
+      return insertedNode;
+    }
+
     // if (!this.root.left && !this.root.right) {
     if (this.nodeComparator.equal(insertedNode, this.root)) {
       // Make root to always be black.
@@ -46,6 +53,14 @@ export default class RedBlackTree extends BinarySearchTree {
   balance(node) {
     // If it is a root node then nothing to balance here.
     if (this.nodeComparator.equal(node, this.root)) {
+      return;
+    }
+
+    // Only a red node under a red parent breaks the rules. After a rotation
+    // the node passed in is the new, black, subtree root: when its parent was
+    // red it was taken for a violation and a healthy subtree got rotated,
+    // leaving two reds in a row and uneven black heights.
+    if (this.isNodeBlack(node)) {
       return;
     }
 

@@ -1,5 +1,51 @@
 import RedBlackTree from '../RedBlackTree';
 
+/**
+ * Walks the whole tree and returns its values in order, failing the test if a
+ * parent link, the search order or a red-black rule is broken.
+ *
+ * @param {RedBlackTree} tree
+ * @return {number[]}
+ */
+function checkRedBlackTree(tree) {
+  const values = [];
+  const problems = [];
+
+  if (!tree.isNodeBlack(tree.root)) problems.push('red root');
+
+  // Returns the number of black nodes on every path down to a leaf.
+  const walk = (node, parent, min, max) => {
+    if (!node) {
+      return 1;
+    }
+
+    if (node.parent !== parent) problems.push(`wrong parent at ${node.value}`);
+    if ((min !== null && node.value <= min) || (max !== null && node.value >= max)) {
+      problems.push(`out of order at ${node.value}`);
+    }
+    if (!tree.isNodeColored(node)) problems.push(`no color at ${node.value}`);
+    if (
+      tree.isNodeRed(node)
+      && ((node.left && tree.isNodeRed(node.left)) || (node.right && tree.isNodeRed(node.right)))
+    ) {
+      problems.push(`two reds in a row at ${node.value}`);
+    }
+
+    const leftBlackHeight = walk(node.left, node, min, node.value);
+    values.push(node.value);
+    const rightBlackHeight = walk(node.right, node, node.value, max);
+
+    if (leftBlackHeight !== rightBlackHeight) problems.push(`black heights differ at ${node.value}`);
+
+    return leftBlackHeight + (tree.isNodeBlack(node) ? 1 : 0);
+  };
+
+  walk(tree.root, null, null, null);
+  expect(problems).toEqual([]);
+
+  return values;
+}
+
 describe('RedBlackTree', () => {
   it('should always color first inserted node as black', () => {
     const tree = new RedBlackTree();
@@ -320,5 +366,61 @@ describe('RedBlackTree', () => {
     };
 
     expect(removeNodeFromRedBlackTree).toThrow();
+  });
+
+  it('should leave the tree untouched when a value is inserted twice', () => {
+    const tree = new RedBlackTree();
+
+    [4, 16, 8, 1].forEach((value) => tree.insert(value));
+
+    const node16 = tree.root.right;
+    expect(node16.value).toBe(16);
+    expect(tree.isNodeBlack(node16)).toBe(true);
+
+    // It used to be repainted red, so the right side lost a black node.
+    expect(tree.insert(16)).toBe(node16);
+    expect(tree.isNodeBlack(node16)).toBe(true);
+    expect(checkRedBlackTree(tree)).toEqual([1, 4, 8, 16]);
+
+    // A duplicate right after a rotation used to crash on a lost parent link.
+    const otherTree = new RedBlackTree();
+    [4, 16, 8, 16].forEach((value) => otherTree.insert(value));
+    expect(checkRedBlackTree(otherTree)).toEqual([4, 8, 16]);
+  });
+
+  it('should not rotate again once a rotation leaves a black subtree root', () => {
+    const tree = new RedBlackTree();
+
+    // 14 needs a left-right rotation under 18, which is a red node's child.
+    [24, 26, 4, 18, 2, 12, 14].forEach((value) => tree.insert(value));
+
+    expect(tree.root.value).toBe(24);
+    expect(tree.root.left.value).toBe(4);
+    expect(tree.root.left.right.value).toBe(14);
+    expect(tree.isNodeBlack(tree.root.left.right)).toBe(true);
+    expect(tree.isNodeRed(tree.root.left.right.left)).toBe(true);
+    expect(tree.isNodeRed(tree.root.left.right.right)).toBe(true);
+    expect(checkRedBlackTree(tree)).toEqual([2, 4, 12, 14, 18, 24, 26]);
+  });
+
+  it('should stay a valid red-black tree through a long run of inserts', () => {
+    const tree = new RedBlackTree();
+    const expectedValues = new Set();
+
+    // Small deterministic linear congruential generator.
+    let seed = 42;
+    const nextRandom = (limit) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return Math.floor(seed / 65536) % limit;
+    };
+
+    for (let step = 0; step < 300; step += 1) {
+      const value = nextRandom(200);
+
+      tree.insert(value);
+      expectedValues.add(value);
+
+      expect(checkRedBlackTree(tree)).toEqual([...expectedValues].sort((a, b) => a - b));
+    }
   });
 });

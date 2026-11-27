@@ -102,8 +102,10 @@ export default class BinarySearchTreeNode extends BinaryTreeNode {
         // Node has a parent. Just remove the pointer to this node from the parent.
         parent.removeChild(nodeToRemove);
       } else {
-        // Node has no parent. Just erase current node value.
-        nodeToRemove.setValue(undefined);
+        // Node has no parent. Just erase current node value. Back to null, the
+        // "empty node" marker that insert() looks for: with undefined the next
+        // insert hung the new value under a phantom root.
+        nodeToRemove.setValue(null);
       }
     } else if (nodeToRemove.left && nodeToRemove.right) {
       // Node has two children.
@@ -132,8 +134,9 @@ export default class BinarySearchTreeNode extends BinaryTreeNode {
       }
     }
 
-    // Clear the parent of removed node.
-    nodeToRemove.parent = null;
+    // A detached node has already lost its parent in removeChild() or
+    // replaceChild(). With two children (or at the root) nodeToRemove stays in
+    // the tree with a new value, so its parent link must be kept.
 
     return true;
   }

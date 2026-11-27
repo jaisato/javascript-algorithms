@@ -294,4 +294,43 @@ describe('BinaryTreeNode', () => {
     expect(root.toString()).toBe('left,root,right');
     expect(newRoot.toString()).toBe('left,root,right');
   });
+
+  it('should keep parent links in sync when removing or replacing children', () => {
+    const rootNode = new BinaryTreeNode(2);
+    const leftNode = new BinaryTreeNode(1);
+    const rightNode = new BinaryTreeNode(3);
+    const replacementNode = new BinaryTreeNode(4);
+
+    rootNode
+      .setLeft(leftNode)
+      .setRight(rightNode);
+
+    expect(rootNode.replaceChild(rightNode, replacementNode)).toBe(true);
+    expect(rootNode.right).toBe(replacementNode);
+    expect(replacementNode.parent).toBe(rootNode);
+    expect(rightNode.parent).toBeNull();
+
+    expect(rootNode.removeChild(leftNode)).toBe(true);
+    expect(rootNode.left).toBeNull();
+    expect(leftNode.parent).toBeNull();
+  });
+
+  it('should not orphan a child that was already attached to another node', () => {
+    const rootNode = new BinaryTreeNode(2);
+    const otherNode = new BinaryTreeNode(5);
+    const childNode = new BinaryTreeNode(1);
+
+    rootNode.setLeft(childNode);
+
+    // Rotations move a child first and replace it afterwards.
+    otherNode.setLeft(childNode);
+    rootNode.setLeft(null);
+
+    expect(otherNode.left).toBe(childNode);
+    expect(childNode.parent).toBe(otherNode);
+
+    rootNode.setRight(childNode);
+    otherNode.setLeft(null);
+    expect(childNode.parent).toBe(rootNode);
+  });
 });
