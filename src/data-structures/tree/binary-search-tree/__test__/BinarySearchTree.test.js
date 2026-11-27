@@ -1,5 +1,37 @@
 import BinarySearchTree from '../BinarySearchTree';
 
+/**
+ * Walks the whole tree and returns its values in order, failing the test if a
+ * parent link or the search order is wrong.
+ *
+ * @param {BinarySearchTree} bst
+ * @return {number[]}
+ */
+function checkBinarySearchTree(bst) {
+  const values = [];
+  const problems = [];
+
+  const walk = (node, parent, min, max) => {
+    if (!node || node.value === null) {
+      return;
+    }
+
+    if (node.parent !== parent) problems.push(`wrong parent at ${node.value}`);
+    if ((min !== null && node.value <= min) || (max !== null && node.value >= max)) {
+      problems.push(`out of order at ${node.value}`);
+    }
+
+    walk(node.left, node, min, node.value);
+    values.push(node.value);
+    walk(node.right, node, node.value, max);
+  };
+
+  walk(bst.root, null, null, null);
+  expect(problems).toEqual([]);
+
+  return values;
+}
+
 describe('BinarySearchTree', () => {
   it('should create binary search tree', () => {
     const bst = new BinarySearchTree();
@@ -150,5 +182,35 @@ describe('BinarySearchTree', () => {
     expect(bst.toString()).toBe('2');
     expect(bst.root.value).toBe(2);
     expect(bst.contains(2)).toBe(true);
+  });
+
+  it('should keep order and parent links through a long run of inserts and removals', () => {
+    const bst = new BinarySearchTree();
+    const expectedValues = new Set();
+
+    // Small deterministic linear congruential generator. With this seed the
+    // removals go through every branch of remove(): leaves, nodes with one
+    // child, nodes with two children (successor right below or deeper), and
+    // the root as a leaf, with one child and with two children.
+    let seed = 161;
+    const nextRandom = (limit) => {
+      seed = (seed * 1103515245 + 12345) % 2147483648;
+      return Math.floor(seed / 65536) % limit;
+    };
+
+    for (let step = 0; step < 500; step += 1) {
+      const value = nextRandom(40);
+
+      if (expectedValues.has(value) && nextRandom(2) === 0) {
+        expect(bst.remove(value)).toBe(true);
+        expectedValues.delete(value);
+      } else {
+        bst.insert(value);
+        expectedValues.add(value);
+      }
+
+      expect(checkBinarySearchTree(bst)).toEqual([...expectedValues].sort((a, b) => a - b));
+      expect(bst.contains(value)).toBe(expectedValues.has(value));
+    }
   });
 });
